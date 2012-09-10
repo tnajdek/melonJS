@@ -64,8 +64,8 @@
 			var start = this.pixelToTileCoords(viewport.x + rect.pos.x, 
 											   viewport.y + rect.pos.y).floorSelf();
 				
-			var end = this.pixelToTileCoords(viewport.x + rect.pos.x + rect.width + this.tilewidth, 
-											 viewport.y + rect.pos.y + rect.height + this.tileheight).ceilSelf();
+			var end = this.pixelToTileCoords(viewport.x + rect.pos.x + rect.width,
+											 viewport.y + rect.pos.y + rect.height).ceilSelf();
 			
 			//ensure we are in the valid tile range
 			end.x = end.x > this.width ? this.width : end.x;

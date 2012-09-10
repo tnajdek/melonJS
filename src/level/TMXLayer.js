@@ -26,6 +26,17 @@
 			
 			this.visible = true;
 			this.opacity = 1.0;
+
+			this.rect = new me.Rect(new me.Vector2d(-Infinity, -Infinity), Infinity, Infinity);
+		},
+
+		/**
+		 * get layer rectangle
+		 * @private
+		 * @function
+		 */
+		getRect : function() {
+			return this.rect;
 		},
 
 		/**
@@ -109,6 +120,16 @@
 			// default opacity
 			this.opacity = 1.0;
 			
+			this.rect = new me.Rect(new me.Vector2d(-Infinity, -Infinity), Infinity, Infinity);
+		},
+
+		/**
+		 * get layer rectangle
+		 * @private
+		 * @function
+		 */
+		getRect : function() {
+			return this.rect;
 		},
 		
 		/**
@@ -231,6 +252,16 @@
 
 			this.isCollisionMap = true;
 
+			this.rect = new me.Rect(new me.Vector2d(0, 0), this.realwidth, this.realheight);
+		},
+
+		/**
+		 * get layer rectangle
+		 * @private
+		 * @function
+		 */
+		getRect : function() {
+			return this.rect;
 		},
 	
 		/**
@@ -312,6 +343,17 @@
 
 			// the default tileset
 			this.tileset = tilesets?this.tilesets.getTilesetByIndex(0):null;
+
+			this.rect = new me.Rect(new me.Vector2d(0, 0), this.realwidth, this.realheight);
+		},
+
+		/**
+		 * get layer rectangle
+		 * @private
+		 * @function
+		 */
+		getRect : function() {
+			return this.rect;
 		},
 		
 		/**

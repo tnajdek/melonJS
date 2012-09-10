@@ -876,6 +876,8 @@ var me = me || {};
 		// list of object to redraw
 		// only valid for visible and update object
 		var dirtyObjects = [];
+
+		var drawTime = 0;
 		
 		var drawCount = 0;
 
@@ -916,9 +918,9 @@ var me = me || {};
 					if (oldRect) {
 						// merge both rect, and add it to the list
 						// directly pass object, since anyway it inherits from rect
-						dirtyRects.push(oldRect.union(obj));
+						dirtyRects.unshift(oldRect.union(obj));
 					} else if (obj.getRect) {
-						dirtyRects.push(obj.getRect());
+						dirtyRects.unshift(obj.getRect());
 					}
 				}
 			}
@@ -972,17 +974,25 @@ var me = me || {};
  		};
 
 		/**
+		 * return the time when drawing started
+		 */
+		api.getDrawTime = function() {
+			return drawTime;
+		},
+
+		/**
 		 * draw all dirty objects/regions
 		 */
 		api.draw = function(context) {
+			if (me.debug.displayDrawTime)
+				drawTime = Date.now();
+
 			// if feature disable, we only have one dirty rect (the viewport area)
-			for ( var r = dirtyRects.length, rect; r--, rect = dirtyRects[r];) {
+			for (var r = dirtyRects.length, rect; r--, rect = dirtyRects[r];) {
 				// parse all objects
-				for ( var o = dirtyObjects.length, obj; o--,
-						obj = dirtyObjects[o];) {
+				for (var o = dirtyObjects.length, obj; o--, obj = dirtyObjects[o];) {
 					// if dirty region enabled, make sure the object is in the area to be refreshed
-					if (me.sys.dirtyRegion && obj.isSprite
-							&& !obj.overlaps(rect)) {
+					if (me.sys.dirtyRegion && !obj.getRect().overlaps(rect)) {
 						continue;
 					}
 					// draw the object using the dirty area to be updated
@@ -1323,15 +1333,26 @@ var me = me || {};
 
 		/**
 		 * returns the amount of object being draw per frame<br>
-		 * @name me.game#getEntityCount
+		 * @name me.game#getDrawCount
 		 * @protected
 		 * @function
-		 * @return {Number} the amount of object entities
+		 * @return {Number} the amount of draws
 		 */
 		api.getDrawCount = function()
 		{
 			return drawManager.getDrawCount();
 		};
+
+		/**
+		 * returns the time when the last frame draw started<br>
+		 * @name me.game#getDrawTime
+		 * @protected
+		 * @function
+		 * @return {Number} the time of frame draw start in milliseconds
+		 */
+		api.getDrawTime = function() {
+			return drawManager.getDrawTime();
+		},
 
 		
 		/**
@@ -1419,7 +1440,7 @@ var me = me || {};
 				drawManager.makeDirty(obj, updated, updated ? oldRect : null);
 			}
 			// update the camera/viewport
-			if (api.viewport.update(drawManager.isDirty)) {
+			if (api.viewport.update(drawManager.isDirty) && !me.sys.dirtyRegion) {
 				drawManager.makeAllDirty();
 			}
 		};

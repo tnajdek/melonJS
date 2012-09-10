@@ -22,6 +22,14 @@
 		displayFPS : false,
 
 		/**
+		 * display average time spent drawing each frame<br>
+		 * default value : false<br>
+		 * @type {Boolean}
+		 * @memberOf me.debug
+		 */
+		displayDrawTime : false,
+
+		/**
 		 * render object Rectangle & Collision Box<br>
 		 * default value : false
 		 * @type {Boolean}
@@ -72,6 +80,7 @@
 			// make sure at least the FPS 
 			// counter is enabled
 			me.debug.displayFPS = true;
+			me.debug.displayDrawTime = true;
 		}
 	};
 
@@ -248,6 +257,10 @@
 			//fps counter
 			var fps_str = "" + me.timer.fps + "/"	+ me.sys.fps + " fps";
 			this.font.draw(context, fps_str, this.width - this.fps_str_len - 5, 5);
+
+			//draw time
+			this.drawtime_str = "draw time : " + (Date.now() - me.game.getDrawTime());
+			this.font.draw(context, this.drawtime_str, 300, 5);
 			
 			context.restore();
 

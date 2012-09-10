@@ -293,7 +293,7 @@
 					 */
 					Object.defineProperty(this, "right", {
 						get : function() {
-							return this.pos.x + this.width;
+							return (this.pos.x + this.width) || Infinity;
 						},
 						configurable : true
 					});
@@ -319,7 +319,7 @@
 					 */
 					Object.defineProperty(this, "bottom", {
 						get : function() {
-							return this.pos.y + this.height;
+							return (this.pos.y + this.height) || Infinity;
 						},
 						configurable : true
 					});
@@ -401,7 +401,7 @@
 						if (this.right !== this.pos.x + this.colPos.x + this.width) {
 							Object.defineProperty(this, "right", {
 								get : function() {
-									return this.pos.x + this.colPos.x + this.width;
+									return (this.pos.x + this.colPos.x + this.width) || Infinity;
 								},
 								configurable : true
 							});
@@ -425,7 +425,7 @@
 						if (this.bottom !== this.pos.y + this.colPos.y + this.height) {
 							Object.defineProperty(this, "bottom", {
 								get : function() {
-									return this.pos.y + this.colPos.y + this.height;
+									return (this.pos.y + this.colPos.y + this.height) || Infinity;
 								},
 								configurable : true
 							});
