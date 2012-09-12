@@ -192,6 +192,16 @@
 		}
 
 	});
+
+
+	// a special getter property for infinite planes
+	var infinitePlane = {
+		get : function() {
+			return Infinity;
+		},
+		configurable : true
+	};
+
 	/************************************************************************************/
 	/*                                                                                  */
 	/*      a rectangle Class Object                                                    */
@@ -293,10 +303,16 @@
 					 */
 					Object.defineProperty(this, "right", {
 						get : function() {
-							return (this.pos.x + this.width) || Infinity;
+							return this.pos.x + this.width;
 						},
 						configurable : true
 					});
+					// special-case for infinite plane
+					//    -Infinity + Infinity === NaN
+					//    NaN != NaN
+					if (this.right != this.right) {
+						Object.defineProperty(this, "right", infinitePlane);
+					}
 					/**
 					 * top coordinate of the Rectange<br>
 					 * takes in account the adjusted size of the rectangle (if set)
@@ -319,10 +335,16 @@
 					 */
 					Object.defineProperty(this, "bottom", {
 						get : function() {
-							return (this.pos.y + this.height) || Infinity;
+							return this.pos.y + this.height;
 						},
 						configurable : true
 					});
+					// special-case for infinite plane
+					//    -Infinity + Infinity === NaN
+					//    NaN != NaN
+					if (this.bottom != this.bottom) {
+						Object.defineProperty(this, "bottom", infinitePlane);
+					}
 
 				},
 
@@ -401,10 +423,16 @@
 						if (this.right !== this.pos.x + this.colPos.x + this.width) {
 							Object.defineProperty(this, "right", {
 								get : function() {
-									return (this.pos.x + this.colPos.x + this.width) || Infinity;
+									return this.pos.x + this.colPos.x + this.width;
 								},
 								configurable : true
 							});
+						}
+						// special-case for infinite plane
+						//    -Infinity + Infinity === NaN
+						//    NaN != NaN
+						if (this.right != this.right) {
+							Object.defineProperty(this, "right", infinitePlane);
 						}
 					}
 					if (y != -1) {
@@ -425,10 +453,16 @@
 						if (this.bottom !== this.pos.y + this.colPos.y + this.height) {
 							Object.defineProperty(this, "bottom", {
 								get : function() {
-									return (this.pos.y + this.colPos.y + this.height) || Infinity;
+									return this.pos.y + this.colPos.y + this.height;
 								},
 								configurable : true
 							});
+						}
+						// special-case for infinite plane
+						//    -Infinity + Infinity === NaN
+						//    NaN != NaN
+						if (this.bottom != this.bottom) {
+							Object.defineProperty(this, "bottom", infinitePlane);
 						}
 					}
 				},
