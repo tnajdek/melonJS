@@ -22,14 +22,6 @@
 		displayFPS : false,
 
 		/**
-		 * display average time spent drawing each frame<br>
-		 * default value : false<br>
-		 * @type {Boolean}
-		 * @memberOf me.debug
-		 */
-		displayDrawTime : false,
-
-		/**
 		 * render object Rectangle & Collision Box<br>
 		 * default value : false
 		 * @type {Boolean}
@@ -80,7 +72,6 @@
 			// make sure at least the FPS 
 			// counter is enabled
 			me.debug.displayFPS = true;
-			me.debug.displayDrawTime = true;
 		}
 	};
 
@@ -141,6 +132,8 @@
 			this.help_str	  = "(s)how/(h)ide";
 			this.help_str_len = this.font.measureText(me.video.getScreenFrameBuffer(), this.help_str).width;
 			this.fps_str_len = this.font.measureText(me.video.getScreenFrameBuffer(), "00/00 fps").width;
+
+			this.drawStart = 0;
 			
 			// bind the "S" and "H" keys
 			me.input.bindKey(me.input.KEY.S, "show");
@@ -190,6 +183,10 @@
 				this.hide();
 			}
 
+			// update draw time
+			// this should be the last object updated by the game manager
+			this.drawStart = Date.now();
+
 			return true;
 		},
 		
@@ -228,6 +225,7 @@
 
 		/** @private */
 		draw : function(context) {
+			var drawTime = Date.now() - this.drawStart;
 			
 			context.save();
 			
@@ -259,8 +257,7 @@
 			this.font.draw(context, fps_str, this.width - this.fps_str_len - 5, 5);
 
 			//draw time
-			this.drawtime_str = "draw time : " + (Date.now() - me.game.getDrawTime());
-			this.font.draw(context, this.drawtime_str, 300, 5);
+			this.font.draw(context, "draw time : " + drawTime, 300, 5);
 			
 			context.restore();
 

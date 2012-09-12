@@ -877,8 +877,6 @@ var me = me || {};
 		// only valid for visible and update object
 		var dirtyObjects = [];
 
-		var drawTime = 0;
-		
 		var drawCount = 0;
 
 		// a flag indicating if we need a redraw
@@ -974,19 +972,9 @@ var me = me || {};
  		};
 
 		/**
-		 * return the time when drawing started
-		 */
-		api.getDrawTime = function() {
-			return drawTime;
-		},
-
-		/**
 		 * draw all dirty objects/regions
 		 */
 		api.draw = function(context) {
-			if (me.debug.displayDrawTime)
-				drawTime = Date.now();
-
 			// if feature disable, we only have one dirty rect (the viewport area)
 			for (var r = dirtyRects.length, rect; r--, rect = dirtyRects[r];) {
 				// parse all objects
@@ -1342,17 +1330,6 @@ var me = me || {};
 		{
 			return drawManager.getDrawCount();
 		};
-
-		/**
-		 * returns the time when the last frame draw started<br>
-		 * @name me.game#getDrawTime
-		 * @protected
-		 * @function
-		 * @return {Number} the time of frame draw start in milliseconds
-		 */
-		api.getDrawTime = function() {
-			return drawManager.getDrawTime();
-		},
 
 		
 		/**
