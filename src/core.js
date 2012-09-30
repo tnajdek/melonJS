@@ -712,6 +712,19 @@ var me = me || {};
 		}
 		return this;
 	};
+
+	if (!Array.prototype.forEach) {
+		/**
+		 * provide a replacement for browsers that don't
+		 * support Array.prototype.forEach (JS 1.6)
+		 * @private
+		 */
+		Array.prototype.forEach = function (callback, scope) {
+			for (var i = 0, j = this.length; j--; i++) {
+				callback.call(scope || this, this[i], i, this);
+			}
+		};
+	}
 	/************************************************************************************/
 
 	/**
@@ -1047,6 +1060,16 @@ var me = me || {};
 
 		// to keep track of deferred stuff
 		var pendingDefer = null;
+		
+		/**
+		 * a default sort function
+		 * @private
+		 */
+		var default_sort_func = function(a, b) {
+			// sort order is inverted,
+			// since we use a reverse loop for the display
+			return (b.z - a.z);
+		};
 
 		/*---------------------------------------------
 
@@ -1497,11 +1520,8 @@ var me = me || {};
 
 		api.sort = function(sort_func) {
 			if (typeof(sort_func) !== "function") {
-				// sort order is inverted,
-				// since we use a reverse loop for the display
-				gameObjects.sort(function(a, b) {
-					return (b.z - a.z);
-				});
+				// default sort function
+				gameObjects.sort(default_sort_func);
 			}
 			else {
 				// user defined sort
@@ -1929,9 +1949,6 @@ var me = me || {};
 		// cache reference to the active screen update frame
 		var _activeUpdateFrame = null;
 
-		// cache reference to the active screen update frame
-		var _fps = null;
-
 		/**
 		 * @ignore
 		 */
@@ -1958,7 +1975,7 @@ var me = me || {};
 				}
 
 				// setup the game loop using setInterval
-				_intervalId = setInterval(_activeUpdateFrame, _fps);
+				_intervalId = setInterval(_activeUpdateFrame, ~~(1000 / me.sys.fps));
 			}
 		};
 
@@ -2160,8 +2177,6 @@ var me = me || {};
 
 			}, false);
 
-			// cache the FPS information
-			_fps = ~~(1000 / me.sys.fps);
 		};
 
 		/**
@@ -2189,7 +2204,7 @@ var me = me || {};
 		 */
 		obj.resume = function(music) {
 			// start the main loop
-			_startRunLoop(_state);
+			_startRunLoop();
 			// current music stop
 			if (music)
 				me.audio.resumeTrack();
@@ -2282,7 +2297,7 @@ var me = me || {};
 				};
 				me.game.viewport.fadeIn(_fade.color, _fade.duration,
 										function() {
-											_switchState(state);
+											_switchState.defer(state);
 										});
 
 			}

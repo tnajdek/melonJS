@@ -53,7 +53,7 @@
 				$.addEventListener('keyup', keyup, false);
 				keyboardInitialized = true;
 			}
-		};
+		}
 		
 		/**
 		 * enable mouse event
@@ -81,7 +81,7 @@
 				}
 				mouseInitialized = true;
 			}
-		};
+		}
 
 
 		/**
@@ -103,7 +103,9 @@
 			else  {
 				e.returnValue = false;
 			}
-		};
+
+			return false;
+		}
 
 		/**
 		 * key down event
@@ -123,11 +125,11 @@
 					me.event.publish(me.event.KEYDOWN, [ action ]);
 				}
 				// prevent event propagation
-				preventDefault(e);
-				return false;
+				return preventDefault(e);
 			}
+
 			return true;
-		};
+		}
 
 
 		/**
@@ -147,11 +149,10 @@
 				me.event.publish(me.event.KEYUP, [ action ]);
 
 				// prevent the event propagation
-				preventDefault(e);
-				return false;
+				return preventDefault(e);
 			}
-			return true;
 
+			return true;
 		}
 		
 		/**
@@ -159,10 +160,11 @@
 		 * @private
 		 */
 		function dispatchMouseEvent(e) {
-			var vpos = me.game.viewport.pos;
-			var map_pos = me.game.currentLevel.pos;
+			var handled = false;
 			var handlers = obj.mouse.handlers[e.type];
 			if (handlers) {
+				var vpos = me.game.viewport.pos;
+				var map_pos = me.game.currentLevel.pos;
 				for(var t=0, l=obj.touches.length; t<l; t++) {
 					// cache the x/y coordinates
 					var x = obj.touches[t].x;
@@ -179,6 +181,7 @@
 							// trigger the corresponding callback
 							if (handler.cb(e) === false) {
 								// stop propagating the event if return false 
+								handled = true;
 								break;
 							}
 						}
@@ -186,7 +189,8 @@
 				} 
 			}
 
-		};
+			return handled;
+		}
 
 		
 		/**
@@ -223,7 +227,7 @@
 				}
 			}
 			obj.mouse.pos.set(obj.touches[0].x,obj.touches[0].y);
-		};
+		}
 
 	
 		/**
@@ -231,11 +235,16 @@
 		 * @private
 		 */
 		function onMouseWheel(e) {
-			// dispatch mouse event to registered object
-			dispatchMouseEvent(e);
-			// prevent default action
-			preventDefault(e);
-		};
+			if (e.target == me.video.getScreenCanvas()) {
+				// dispatch mouse event to registered object
+				if (dispatchMouseEvent(e)) {
+					// prevent default action
+					return preventDefault(e);
+				}
+			}
+
+			return true;
+		}
 
 		
 		/**
@@ -246,44 +255,50 @@
 			// update position
 			updateCoordFromEvent(e);
 			// dispatch mouse event to registered object
-			dispatchMouseEvent(e);
-			// prevent default action
-			preventDefault(e);
-		};
+			if (dispatchMouseEvent(e)) {
+				// prevent default action
+				return preventDefault(e);
+			}
+
+			return true;
+		}
 		
 		/**
 		 * mouse event management (mousedown, mouseup)
 		 * @private
 		 */
 		function onMouseEvent(e) {
+			// dispatch event to registered objects
+			if (dispatchMouseEvent(e)) {
+				// prevent default action
+				return preventDefault(e);
+			}
+
 			// in case of touch event button is undefined
 			var keycode = obj.mouse.bind[e.button || 0];
 
-			// dispatch event to registered objects
-			dispatchMouseEvent(e);		
 			// check if mapped to a key
 			if (keycode) {
 				if (e.type === 'mousedown' || e.type === 'touchstart')
-					keydown(e, keycode);
+					return keydown(e, keycode);
 				else // 'mouseup' or 'touchend'
-					keyup(e, keycode);
+					return keyup(e, keycode);
 			}
-			else {
-				// prevent default action
-				preventDefault(e);
-			}
-		};
+
+			return true;
+		}
 		
 		/**
-		 * mouse event management (mousedown, mouseup)
+		 * mouse event management (touchstart, touchend)
 		 * @private
 		 */
 		function onTouchEvent(e) {
 			// update the new touch position
 			updateCoordFromEvent(e);
 			// reuse the mouse event function
-			onMouseEvent(e);
-		};
+			return onMouseEvent(e);
+		}
+
 		/**
 		 * event management (Accelerometer)
 		 * http://www.mobilexweb.com/samples/ball.html
@@ -293,7 +308,7 @@
 		function onDeviceMotion(e) {
 			// Accelerometer information  
 			obj.accel = e.accelerationIncludingGravity;
-		};
+		}
 
 		/*---------------------------------------------
 			
@@ -335,7 +350,7 @@
 			MIDDLE: 1,
 			RIGHT:	2,
 			// bind list for mouse buttons
-			bind: [3],
+			bind: [ 0, 0, 0 ],
 			handlers:{} 
 		};
 		

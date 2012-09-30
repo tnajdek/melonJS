@@ -49,6 +49,24 @@
 		},
 
 		/**
+		 * get the layer alpha channel value<br>
+		 * @return current opacity value between 0 and 1
+		 */
+		getOpacity : function() {
+			return this.opacity;
+		},
+
+		/**
+		 * set the layer alpha channel value<br>
+		 * @param {alpha} alpha opacity value between 0 and 1
+		 */
+		setOpacity : function(alpha) {
+			if (alpha) {
+				this.opacity = alpha.clamp(0.0, 1.0);
+			}
+		},
+
+		/**
 		 * update function
 		 * @private
 		 * @function
@@ -62,12 +80,21 @@
 		 * @private
 		 */
 		draw : function(context, rect) {
+			// save context state
+			context.save();
+			// set layer opacity
+			context.globalAlpha = this.opacity;
+			// set layer color
 			context.fillStyle = this.color;
+
 			// correct the rect size is the map is not at the default screen position
 			// (fixme : this might not work with dirtyRect)
 			var shift = game.currentLevel.pos;
 			// clear the specified rect
 			context.fillRect(rect.left - shift.x, rect.top - shift.y, rect.width, rect.height);
+
+			// restore context state
+			context.restore();
 		}
 	});	
 
@@ -144,6 +171,24 @@
 			this.viewport = null;
 			this.offset = null;
 		},
+
+		/**
+		 * get the layer alpha channel value<br>
+		 * @return current opacity value between 0 and 1
+		 */
+		getOpacity : function() {
+			return this.opacity;
+		},
+
+		/**
+		 * set the layer alpha channel value<br>
+		 * @param {alpha} alpha opacity value between 0 and 1
+		 */
+		setOpacity : function(alpha) {
+			if (alpha) {
+				this.opacity = alpha.clamp(0.0, 1.0);
+			}
+		},
 		
 		/**
 		 * update function
@@ -179,6 +224,7 @@
 			
 			// check if transparency
 			if (this.opacity < 1.0) {
+				context.save();
 				context.globalAlpha = this.opacity;
 			}
 			
@@ -231,9 +277,10 @@
 				} while( true );
 			}
 			
-			// restore default alpha value
-			context.globalAlpha = 1.0;
-			
+			// restore context state
+			if (this.opacity < 1.0) {
+				context.restore();
+			}
 		}
 	});	
 	
@@ -329,6 +376,7 @@
 
 			this.name = null;
 			this.visible = false;
+			this.opacity = 1.0;
 
 			// data array
 			this.layerData = null;
@@ -382,7 +430,25 @@
 				}
 			}
 		},
-		
+
+		/**
+		 * get the layer alpha channel value<br>
+		 * @return current opacity value between 0 and 1
+		 */
+		getOpacity : function() {
+			return this.opacity;
+		},
+
+		/**
+		 * set the layer alpha channel value<br>
+		 * @param {alpha} alpha opacity value between 0 and 1
+		 */
+		setOpacity : function(alpha) {
+			if (alpha) {
+				this.opacity = alpha.clamp(0.0, 1.0);
+			}
+		},
+
 		/**
 		 * Return the TileId of the Tile at the specified position
 		 * @name me.TiledLayer#getTileId
@@ -703,6 +769,20 @@
 			// erase the corresponding area in the canvas
 			if (this.visible && this.preRender) {
 				this.layerSurface.clearRect(x * this.tilewidth,	y * this.tileheight, this.tilewidth, this.tileheight);
+			}
+		},
+
+		/**
+		 * set the layer alpha channel value<br>
+		 * @param {alpha} alpha opacity value between 0 and 1
+		 */
+		setOpacity : function(alpha) {
+			// set opacity through parent function
+			this.parent(alpha);
+
+			// if pre-rendering is used, update opacity on the hidden canvas context
+			if (this.preRender) {
+				this.layerSurface.globalAlpha = this.opacity;
 			}
 		},
 
