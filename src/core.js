@@ -110,11 +110,11 @@ var me = me || {};
 
 		/**
 		 * Global scaling factor(default 1.0)
-		 * @type {int}
+		 * @type {me.Vector2d}
 		 * @memberOf me.sys
 		 */
-		scale : 1.0,
-
+		scale : null, //initialized by me.video.init
+ 	
 		/**
 		 * Global gravity settings <br>
 		 * will override entities init value if defined<br>
@@ -988,16 +988,41 @@ var me = me || {};
 		 * draw all dirty objects/regions
 		 */
 		api.draw = function(context) {
+			// cache viewport position vector
+			var posx = me.game.viewport.pos.x;
+			var posy = me.game.viewport.pos.y;
+						
+			// save the current context
+			context.save();
+			// translate by default to screen coordinates
+			context.translate(-posx, -posy)
+			
+			// substract the map offset to current the current pos
+			posx -= me.game.currentLevel.pos.x;
+			posy -= me.game.currentLevel.pos.y;
+			
 			// if feature disable, we only have one dirty rect (the viewport area)
 			for (var r = dirtyRects.length, rect; r--, rect = dirtyRects[r];) {
 				// parse all objects
-				for (var o = dirtyObjects.length, obj; o--, obj = dirtyObjects[o];) {
+				for (var o = dirtyObjects.length, obj; o--, obj = dirtyObjects[o]; ) {
 					// if dirty region enabled, make sure the object is in the area to be refreshed
 					if (me.sys.dirtyRegion && !obj.getRect().overlaps(rect)) {
 						continue;
 					}
+
+					if (obj.floating===true) {
+						context.save();
+						// cancel the previous translate
+						context.translate(posx, posy);
+					}
+
 					// draw the object using the dirty area to be updated
 					obj.draw(context, rect);
+
+					if (obj.floating===true) {
+						context.restore();
+					}
+
 					drawCount++;
 				}
 				// some debug stuff
@@ -1005,6 +1030,9 @@ var me = me || {};
 					rect.draw(context, "white");
 				}
 			}
+			
+			// restore initial context
+			context.restore();
 		};
 
 		/**
@@ -1059,7 +1087,8 @@ var me = me || {};
 		var initialized = false;
 
 		// to keep track of deferred stuff
-		var pendingDefer = null;
+		var pendingRemove = null;
+		var pendingSort = null;
 		
 		/**
 		 * a default sort function
@@ -1184,13 +1213,6 @@ var me = me || {};
 		 */
 		api.reset = function() {
 
-			//cancel any pending task
-			if (pendingDefer)
-			{
-				clearTimeout(pendingDefer);
-			}
-			pendingDefer = null;
-
 			// initialized the object if not yet done
 			if (!initialized)
 				api.init();
@@ -1211,7 +1233,7 @@ var me = me || {};
 			// dummy current level
 			api.currentLevel = {pos:{x:0,y:0}};
 		};
-
+	
 		/**
 		 * Load a TMX level
 		 * @name me.game#loadTMXLevel
@@ -1252,7 +1274,7 @@ var me = me || {};
 					}
 				}
 			}
-
+			
 			// check if the map has different default (0,0) screen coordinates
 			if (api.currentLevel.pos.x != api.currentLevel.pos.y) {
 				// translate the display accordingly
@@ -1331,11 +1353,11 @@ var me = me || {};
 		};
 
 		/**
-		 * returns the amount of existing entities<br>
-		 * @name me.game#getEntityCount
+		 * returns the amount of existing objects<br>
+		 * @name me.game#getObjectCount
 		 * @protected
 		 * @function
-		 * @return {Number} the amount of object entities
+		 * @return {Number} the amount of object
 		 */
 		api.getObjectCount = function()
 		{
@@ -1343,11 +1365,11 @@ var me = me || {};
 		};
 
 		/**
-		 * returns the amount of object being draw per frame<br>
+		 * returns the amount of object being drawn per frame<br>
 		 * @name me.game#getDrawCount
 		 * @protected
 		 * @function
-		 * @return {Number} the amount of draws
+		 * @return {Number} the amount of object draws
 		 */
 		api.getDrawCount = function()
 		{
@@ -1420,7 +1442,7 @@ var me = me || {};
 		 * @function
 		 */
 		api.update = function() {
-
+			
 			// previous rect (if any)
 			var oldRect = null;
 			// loop through our objects
@@ -1435,6 +1457,9 @@ var me = me || {};
 				if (obj.visible) {
 					obj.inViewport = (!obj.isSprite || obj.floating) ? true : api.viewport.isVisible(obj);
 				}
+				else {
+					obj.inViewport = false;
+				}
 
 				// add it to the draw manager
 				drawManager.makeDirty(obj, updated, updated ? oldRect : null);
@@ -1443,8 +1468,10 @@ var me = me || {};
 			if (api.viewport.update(drawManager.isDirty) && !me.sys.dirtyRegion) {
 				drawManager.makeAllDirty();
 			}
+			
 		};
-
+		
+		
 		/**
 		 * remove an object
 		 * @name me.game#remove
@@ -1472,9 +1499,9 @@ var me = me || {};
 				obj.visible = false
 				// else wait the end of the current loop
 				/** @private */
-				pendingDefer = (function (obj) {
+				pendingRemove = (function (obj) {
 					gameObjects.remove(obj);
-					pendingDefer = null;
+					pendingRemove = null;
 				}).defer(obj);
 			}
 		};
@@ -1486,6 +1513,16 @@ var me = me || {};
 		 * @function
 		 */
 		api.removeAll = function() {
+			//cancel any pending tasks
+			if (pendingRemove) {
+				clearTimeout(pendingRemove);
+				pendingRemove = null;
+			}
+			if (pendingSort) {
+				clearTimeout(pendingSort);
+				pendingSort = null;
+			}
+			
 			// inform all object they are about to be deleted
 			for (var i = gameObjects.length ; i-- ;) {
 				if (gameObjects[i].isPersistent) {
@@ -1519,16 +1556,23 @@ var me = me || {};
 		 */
 
 		api.sort = function(sort_func) {
-			if (typeof(sort_func) !== "function") {
-				// default sort function
-				gameObjects.sort(default_sort_func);
-			}
-			else {
-				// user defined sort
-				gameObjects.sort(sort_func);
-			}
-			// make sure we redraw everything
-			api.repaint();
+			// do nothing if there is already 
+			// a previous pending sort
+			if (pendingSort === null) {
+				// use the default sort function if
+				// the specified one is not valid
+				if (typeof(sort_func) !== "function") {
+					sort_func = default_sort_func;
+				}
+				pendingSort = (function (sort_func) {
+					// sort everything
+					gameObjects.sort(sort_func);
+					// clear the defer id
+					pendingSort = null;
+					// make sure we redraw everything
+					me.game.repaint();
+				}).defer(sort_func);
+			};
 		};
 
 		/**

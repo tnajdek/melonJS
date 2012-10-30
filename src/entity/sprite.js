@@ -132,9 +132,6 @@
 			// scale factor of the object
 			this.scale = new me.Vector2d(1.0, 1.0);
 
-			// get a reference to the current viewport
-			this.vp = me.game.viewport;
-
 			// set the default sprite index & offset
 			this.offset = new me.Vector2d(0, 0);
 
@@ -298,8 +295,8 @@
 			// sprite alpha value
 			context.globalAlpha = this.alpha;
 
-			// translate to screen coordinates
-			var xpos = ~~(this.pos.x - this.vp.pos.x), ypos = ~~(this.pos.y - this.vp.pos.y);
+			// clamp position vector to pixel grid
+			var xpos = ~~this.pos.x, ypos = ~~this.pos.y;
 			
 			if ((this.scaleFlag) || (this.angle!==0)) {
 				// calculate pixel pos of the anchor point

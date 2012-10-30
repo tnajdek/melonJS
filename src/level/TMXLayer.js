@@ -26,6 +26,7 @@
 			
 			this.visible = true;
 			this.opacity = 1.0;
+			this.floating = true;
 
 			this.rect = new me.Rect(new me.Vector2d(-Infinity, -Infinity), Infinity, Infinity);
 		},
@@ -80,21 +81,18 @@
 		 * @private
 		 */
 		draw : function(context, rect) {
-			// save context state
-			context.save();
 			// set layer opacity
+			var _alpha = context.globalAlpha
 			context.globalAlpha = this.opacity;
+			
 			// set layer color
 			context.fillStyle = this.color;
 
-			// correct the rect size is the map is not at the default screen position
-			// (fixme : this might not work with dirtyRect)
-			var shift = game.currentLevel.pos;
 			// clear the specified rect
-			context.fillRect(rect.left - shift.x, rect.top - shift.y, rect.width, rect.height);
+			context.fillRect(rect.left, rect.top, rect.width, rect.height);
 
-			// restore context state
-			context.restore();
+			// restore context alpha value
+			context.globalAlpha = _alpha;
 		}
 	});	
 
@@ -130,7 +128,7 @@
 			this.z = z;
 			
 			// if ratio !=0 scrolling image
-			this.ratio = ratio || 0;
+			this.ratio = ratio || 1;
 			
 			// last position of the viewport
 			this.lastpos = game.viewport.pos.clone();
@@ -146,6 +144,9 @@
 			
 			// default opacity
 			this.opacity = 1.0;
+			
+			// ?
+			this.floating = true;
 			
 			this.rect = new me.Rect(new me.Vector2d(-Infinity, -Infinity), Infinity, Infinity);
 		},
@@ -224,7 +225,8 @@
 			
 			// check if transparency
 			if (this.opacity < 1.0) {
-				context.save();
+				// set the layer alpha value
+				var _alpha = context.globalAlpha
 				context.globalAlpha = this.opacity;
 			}
 			
@@ -279,7 +281,7 @@
 			
 			// restore context state
 			if (this.opacity < 1.0) {
-				context.restore();
+				context.globalAlpha = _alpha;
 			}
 		}
 	});	
@@ -454,8 +456,8 @@
 		 * @name me.TiledLayer#getTileId
 		 * @public
 		 * @function
-		 * @param {Integer} x x position 
-		 * @param {Integer} y y position
+		 * @param {Integer} x x coordinate in pixel 
+		 * @param {Integer} y y coordinate in pixel
 		 * @return {Int} TileId
 		 */
 		getTileId : function(x, y) {
@@ -468,8 +470,8 @@
 		 * @name me.TiledLayer#getTile
 		 * @public
 		 * @function
-		 * @param {Integer} x x position 
-		 * @param {Integer} y y position
+		 * @param {Integer} x x coordinate in pixel 
+		 * @param {Integer} y y coordinate in pixel
 		 * @return {me.Tile} Tile Object
 		 */
 		getTile : function(x, y) {
@@ -481,8 +483,8 @@
 		 * @name me.TiledLayer#setTile
 		 * @public
 		 * @function
-		 * @param {Integer} x x position 
-		 * @param {Integer} y y position
+		 * @param {Integer} x x coordinate in tile 
+		 * @param {Integer} y y coordinate in tile
 		 * @param {Integer} tileId tileId
 		 */
 		setTile : function(x, y, tileId) {
@@ -494,8 +496,8 @@
 		 * @name me.TiledLayer#clearTile
 		 * @public
 		 * @function
-		 * @param {Integer} x x position 
-		 * @param {Integer} y y position 
+		 * @param {Integer} x x coordinate in tile 
+		 * @param {Integer} y y coordinate in tile 
 		 */
 		clearTile : function(x, y) {
 			// clearing tile
@@ -811,23 +813,15 @@
 			}
 			// dynamically render the layer
 			else {
-			
-				// save the context 
-				context.save();
-				
-				// check if transparency
-				if (this.opacity < 1.0) {
-					context.globalAlpha = this.opacity;
-				}
+				// set the layer alpha value
+				var _alpha = context.globalAlpha
+				context.globalAlpha = this.opacity;
 
-				// translate the display as we want to have per pixel scrolling				
-				context.translate( -vpos.x, -vpos.y);
-				
 				// draw the layer
 				this.renderer.drawTileLayer(context, this, vpos, rect);
 				
 				// restore context to initial state
-				context.restore();
+				context.globalAlpha = _alpha;
 			}
 		}
 	});

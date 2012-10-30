@@ -787,8 +787,8 @@
 						this.collisionBox.draw(context, "red");
 						
 						// draw entity current velocity
-						var x =  ~~(this.pos.x + this.hWidth - this.vp.pos.x);
-						var y =  ~~(this.pos.y + this.hHeight - this.vp.pos.y);
+						var x =  ~~(this.pos.x + this.hWidth);
+						var y =  ~~(this.pos.y + this.hHeight);
 						
 						context.lineWidth = 1;
 						context.beginPath();
@@ -955,9 +955,7 @@
 					if (me.debug.renderHitBox) {
 						// draw the sprite rectangle
 						context.strokeStyle = "blue";
-						context.strokeRect(this.pos.x - me.game.viewport.pos.x,
-								this.pos.y - me.game.viewport.pos.y,
-								this.width, this.height);
+						context.strokeRect(this.pos.x, this.pos.y, this.width, this.height);
 
 						this.collisionBox.draw(context);
 					}
