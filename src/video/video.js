@@ -235,18 +235,14 @@
 			me.event.subscribe(me.event.WINDOW_ONRESIZE, me.video.onresize.bind(me.video));
 			
 			// create the main canvas
-			canvas = document.createElement("canvas");
-			canvas.setAttribute("width", (game_width_zoom) + "px");
-			canvas.setAttribute("height", (game_height_zoom) + "px");
-			canvas.setAttribute("border", "0px solid black");
-			canvas.setAttribute("display", "block"); // ??
+			canvas = api.createCanvas(game_width_zoom, game_height_zoom);
 
 			// add our canvas
 			if (wrapperid) {
 				wrapper = document.getElementById(wrapperid);
 			}
-			else {
-				// if wrapperid is not defined (null)
+			// if wrapperid is not defined (null)
+			if (!wrapper) {
 				// add the canvas to document.body
 				wrapper = document.body;
 			}
@@ -261,11 +257,11 @@
 
 			// create the back buffer if we use double buffering
 			if (double_buffering) {
-				backBufferContext2D = api.createCanvasSurface(game_width, game_height);
-				backBufferCanvas = backBufferContext2D.canvas;
+				backBufferCanvas = api.createCanvas(game_width, game_height);
+				backBufferContext2D = backBufferCanvas.getContext('2d');
 			} else {
+				backBufferCanvas = canvas;
 				backBufferContext2D = context2D;
-				backBufferCanvas = context2D.canvas;
 			}
 			
 			// trigger an initial resize();
@@ -325,24 +321,40 @@
 		};
 
 		/**
-		 * allocate and return a new Canvas 2D surface
-		 * @name me.video#createCanvasSurface
+		 * Create and return a new Canvas
+		 * @name me.video#createCanvas
 		 * @function
-		 * @param {Int} width canvas width
-		 * @param {Int} height canvas height
-		 * @return {Context2D}
+		 * @param {Int} width width
+		 * @param {Int} height height
+		 * @return {Canvas}
 		 */
-		api.createCanvasSurface = function(width, height) {
-			var privateCanvas = document.createElement("canvas");
+		api.createCanvas = function(width, height) {
+			var _canvas = document.createElement("canvas");
 
-			privateCanvas.width = width || backBufferCanvas.width;
-			privateCanvas.height = height || backBufferCanvas.height;
+			_canvas.width = width || backBufferCanvas.width;
+			_canvas.height = height || backBufferCanvas.height;
 
-			return privateCanvas.getContext('2d');
+			return _canvas;
 		};
 
 		/**
-		 * return a reference of the display canvas
+		 * Create and return a new 2D Context
+		 * @name me.video#createCanvasSurface
+		 * @function
+		 * @deprecated
+		 * @param {Int} width width
+		 * @param {Int} height height
+		 * @return {Context2D}
+		 */
+		api.createCanvasSurface = function(width, height) {
+			return api.createCanvas(width, height).getContext('2d');
+		};
+
+		/**
+		 * return a reference to the screen canvas <br>
+		 * use this when checking for display size, event <br>
+		 * or if you need to apply any special "effect" to <br>
+		 * the corresponding context (ie. imageSmoothingEnabled)
 		 * @name me.video#getScreenCanvas
 		 * @function
 		 * @return {Canvas}
@@ -352,12 +364,22 @@
 		};
 
 		/**
-		 * return a reference to the screen framebuffer
-		 * @name me.video#getScreenFrameBuffer
+		 * return a reference to the system canvas
+		 * @name me.video#getSystemCanvas
+		 * @function
+		 * @return {Canvas}
+		 */
+		api.getSystemCanvas = function() {
+			return backBufferCanvas;
+		};
+		
+		/**
+		 * return a reference to the system 2d Context
+		 * @name me.video#getSystemContext
 		 * @function
 		 * @return {Context2D}
 		 */
-		api.getScreenFrameBuffer = function() {
+		api.getSystemContext = function() {
 			return backBufferContext2D;
 		};
 		
@@ -369,8 +391,8 @@
 			if (auto_scale) {
 				// get the parent container max size
 				var parent = me.video.getScreenCanvas().parentNode;
-				var max_width = parent.width || window.innerWidth;
-				var max_height = parent.height || window.innerHeight;
+				var max_width = parent.offsetWidth || window.innerWidth;
+				var max_height = parent.offsetHeight || window.innerHeight;
 				
 				if (deferResizeId) {
 					// cancel any previous pending resize
@@ -436,7 +458,7 @@
 			context.save();
 			context.setTransform(1, 0, 0, 1, 0, 0);
 			context.fillStyle = col;
-			context.fillRect(0, 0, context.canvas.width, context.canvas.height);
+			context.fillRect(0, 0, api.getWidth(),api.getHeight());
 			context.restore();
 		};
 
@@ -455,7 +477,27 @@
 			context.scale(scale, scale);
 
 		};
-
+		
+		/**
+		 * enable/disable image smoothing <br>
+		 * (!) this might not be supported by all browsers <br>
+		 * default : enabled
+		 * @name me.video#setImageSmoothing
+		 * @function
+		 * @param {Boolean} enable
+		 */
+		api.setImageSmoothing = function(enable) {
+			// a quick polyfill for the `imageSmoothingEnabled` property
+			var vendors = ['ms', 'moz', 'webkit', 'o'];
+			for(var x = 0; x < vendors.length; ++x) {
+				if (context2D[vendors[x]+'ImageSmoothingEnabled'] !== undefined) {
+					context2D[vendors[x]+'ImageSmoothingEnabled'] = enable
+				}
+			};
+			// generic one (if implemented)
+			context2D.imageSmoothingEnabled = false;
+		};
+		
 		/**
 		 * enable/disable Alpha for the specified context
 		 * @name me.video#setAlpha
