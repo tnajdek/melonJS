@@ -38,6 +38,14 @@
 		renderCollisionMap : false,
 
 		/**
+		 * render Collision Spacial Grid<br>
+		 * default value : false
+		 * @type Boolean
+		 * @memberOf me.debug
+		 */
+		renderCollisionGrid : false,
+
+		/**
 		 * render dirty region/rectangle<br>
 		 * default value : false<br>
 		 * (feature must be enabled through the me.sys.dirtyRegion flag)

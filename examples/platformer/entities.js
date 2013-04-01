@@ -91,8 +91,21 @@ var PlayerEntity = me.ObjectEntity.extend({
 			return true;
 		}
 		
-		// check for collision with sthg
-		var res = me.game.collide(this);
+		// check if we moved (a "stand" animation would definitely be cleaner)
+		if (this.vel.x!=0 || this.vel.y!=0 || (this.renderable&&this.renderable.isFlickering())) {
+			this.parent();
+			return true;
+		}
+
+		return false;
+	},
+
+	/**
+	 * collision handle
+	 */
+	// FIXME
+	onCollision : function (res, obj) {
+		this.parent();
 
 		if (res) {
 			switch (res.obj.type) {	
@@ -116,16 +129,7 @@ var PlayerEntity = me.ObjectEntity.extend({
 				default : break;
 			}
 		}
-		
-		// check if we moved (a "stand" animation would definitely be cleaner)
-		if (this.vel.x!=0 || this.vel.y!=0 || (this.renderable&&this.renderable.isFlickering())) {
-			this.parent();
-			return true;
-		}
-		
-		return false;
 	},
-
 	
 	/**
 	 * ouch
@@ -169,7 +173,7 @@ var CoinEntity = me.CollectableEntity.extend({
 		me.audio.play("cling", false);
 		// give some score
 		me.game.HUD.updateItemValue("score", 250);
-		
+
 		//avoid further collision and delete it
 		this.collidable = false;
 		me.game.remove(this);
@@ -242,9 +246,11 @@ var PathEnemyEntity = me.ObjectEntity.extend({
 	 * collision handle
 	 */
 	onCollision : function (res, obj) {
+		this.parent();
+
 		// res.y >0 means touched by something on the bottom
 		// which mean at top position for this one
-		if (this.alive && (res.y > 0) && obj.falling) {
+		if (res && this.alive && (res.y > 0) && obj.falling) {
 			// make it dead
 			this.alive = false;
 			// and not collidable anymore

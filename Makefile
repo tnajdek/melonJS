@@ -69,7 +69,8 @@ MODULE = $(srcdir)/core.js\
 	 $(srcdir)/level/LevelDirector.js\
 	 $(srcdir)/vendors/tween.js\
 	 $(srcdir)/vendors/minpubsub.src.js\
-	 $(srcdir)/plugin/plugin.js
+	 $(srcdir)/plugin/plugin.js\
+	 $(srcdir)/entity/collision.js
 
 
 # Debug Target name

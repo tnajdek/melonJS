@@ -579,6 +579,46 @@ var me = me || {};
 		}
 	};
 
+	/**
+	 * Add isObject fn to Object.
+	 * @param {Object} [obj] Object to check.
+	 * @return {Boolean} True if obj is a pure object
+	 * @example
+	 *
+	 *   // true
+	 *   console.log( Object.isObject({}) );
+	 *   console.log( Object.isObject(new Object()) );
+	 *   console.log( Object.isObject(new Date()) );
+	 *
+	 *   // false
+	 *   console.log( Object.isObject(Object) );
+	 *   console.log( Object.isObject(String) );
+	 *   console.log( Object.isObject(Array) );
+	 *   console.log( Object.isObject(Date) );
+	 *   console.log( Object.isObject(Function) );
+	 *   console.log( Object.isObject(function(){}) );
+	 *   console.log( Object.isObject([]) );
+	 *   console.log( Object.isObject(1) );
+	 *   console.log( Object.isObject(true) );
+	 *   console.log( Object.isObject("hello") );
+	 *   console.log( Object.isObject(undefined) );
+	 *   console.log( Object.isObject(null) );
+	 *
+	 */
+	Object.prototype.isObject = function(obj) {
+		try {
+			return !!(
+				!Array.isArray(obj) &&
+				Array.isArray(Object.keys(obj)) &&
+				typeof(obj) === "object"
+			);
+		}
+		catch (e) {
+			return false;
+		}
+	};
+
+
 
 	if(!String.prototype.trim) {  
 		/**
@@ -968,7 +1008,12 @@ var me = me || {};
 					rect.draw(context, "white");
 				}
 			}
-			
+
+			// collision detection debug
+			if (me.debug.renderCollisionGrid && me.game.currentLevel) {
+				me.collision.draw(context);
+			}
+
 			// restore initial context
 			context.restore();
 		};
@@ -1080,33 +1125,6 @@ var me = me || {};
 		 */		
 		api.renderer = null;
 
-		// FIX ME : put this somewhere else
-		api.NO_OBJECT = 0;
-
-		/**
-		 * Default object type constant.<br>
-		 * See type property of the returned collision vector.
-		 * @constant
-		 * @name me.game#ENEMY_OBJECT
-		 */
-		api.ENEMY_OBJECT = 1;
-
-		/**
-		 * Default object type constant.<br>
-		 * See type property of the returned collision vector.
-		 * @constant
-		 * @name me.game#COLLECTABLE_OBJECT
-		 */
-		api.COLLECTABLE_OBJECT = 2;
-
-		/**
-		 * Default object type constant.<br>
-		 * See type property of the returned collision vector.
-		 * @constant
-		 * @name me.game#ACTION_OBJECT
-		 */
-		api.ACTION_OBJECT = 3; // door, etc...
-
 		/**
 		 * Fired when a level is fully loaded and <br>
 		 * and all entities instantiated. <br>
@@ -1194,6 +1212,7 @@ var me = me || {};
 			// get the collision map
 			api.collisionMap = api.currentLevel.getLayerByName("collision");
 			if (!api.collisionMap || !api.collisionMap.isCollisionMap) {
+				api.collisionMap = null;
 				console.error("WARNING : no collision map detected");
 			}
 
@@ -1205,6 +1224,9 @@ var me = me || {};
 					api.add(layers[i]);
 				}
 			};
+
+			// Reset collision spacial grid
+			me.collision.reset();
 
 			// change the viewport limit
 			api.viewport.setBounds(Math.max(api.currentLevel.width, api.viewport.width),
@@ -1541,114 +1563,6 @@ var me = me || {};
 					me.game.repaint();
 				}).defer(sort_func);
 			};
-		};
-
-		/**
-		 * Checks if the specified entity collides with others entities.
-		 * @name me.game#collide
-		 * @public
-		 * @function
-		 * @param {me.ObjectEntity} obj Object to be tested for collision
-		 * @param {Boolean} [multiple=false] check for multiple collision
-		 * @return {me.Vector2d} collision vector or an array of collision vector (multiple collision){@link me.Rect#collideVsAABB}
-		 * @example
-		 * // update player movement
-		 * this.updateMovement();
-		 *
-		 * // check for collision with other objects
-		 * res = me.game.collide(this);
-		 *
-		 * // check if we collide with an enemy :
-		 * if (res && (res.obj.type == me.game.ENEMY_OBJECT))
-		 * {
-		 *   if (res.x != 0)
-		 *   {
-		 *      // x axis
-		 *      if (res.x<0)
-		 *         console.log("x axis : left side !");
-		 *      else
-		 *         console.log("x axis : right side !");
-		 *   }
-		 *   else
-		 *   {
-		 *      // y axis
-		 *      if (res.y<0)
-		 *         console.log("y axis : top side !");
-		 *      else
-		 *         console.log("y axis : bottom side !");
-		 *   }
-		 * }
-		 */
-		api.collide = function(objA, multiple) {
-			var res;
-			// make sure we have a boolean
-			multiple = multiple===true ? true : false;
-			if (multiple===true) {
-				var mres = [], r = 0;
-			} 
-			// this should be replace by a list of the 4 adjacent cell around the object requesting collision
-			for ( var i = gameObjects.length, obj; i--, obj = gameObjects[i];)//for (var i = objlist.length; i-- ;)
-			{
-				if (obj.inViewport && obj.visible && obj.collidable && (obj!=objA))
-				{
-					res = obj.collisionBox.collideVsAABB.call(obj.collisionBox, objA.collisionBox);
-					if (res.x != 0 || res.y != 0) {
-						// notify the object
-						obj.onCollision.call(obj, res, objA);
-						// return the type (deprecated)
-						res.type = obj.type;
-						// return a reference of the colliding object
-						res.obj  = obj;
-						// stop here if we don't look for multiple collision detection
-						if (!multiple) {
-							return res;
-						}
-						mres[r++] = res;
-					}
-				}
-			}
-			return multiple?mres:null;
-		};
-
-		/**
-		 * Checks if the specified entity collides with others entities of the specified type.
-		 * @name me.game#collideType
-		 * @public
-		 * @function
-		 * @param {me.ObjectEntity} obj Object to be tested for collision
-		 * @param {String} type Entity type to be tested for collision
-		 * @param {Boolean} [multiple=false] check for multiple collision
-		 * @return {me.Vector2d} collision vector or an array of collision vector (multiple collision){@link me.Rect#collideVsAABB}
-		 */
-		api.collideType = function(objA, type, multiple) {
-			var res;
-			// make sure we have a boolean
-			multiple = multiple===true ? true : false;
-			if (multiple===true) {
-				var mres = [], r = 0;
-			} 
-			// this should be replace by a list of the 4 adjacent cell around the object requesting collision
-			for ( var i = gameObjects.length, obj; i--, obj = gameObjects[i];)//for (var i = objlist.length; i-- ;)
-			{
-				if (obj.inViewport && obj.visible && obj.collidable && (obj.type === type) && (obj!=objA))
-				{
-					res = obj.collisionBox.collideVsAABB.call(obj.collisionBox, objA.collisionBox);
-					if (res.x != 0 || res.y != 0) {
-						// notify the object
-						obj.onCollision.call(obj, res, objA);
-						// return the type (deprecated)
-						res.type = obj.type;
-						// return a reference of the colliding object
-						res.obj  = obj;
-						// stop here if we don't look for multiple collision detection
-						if (!multiple) {
-							return res;
-						}
-						mres[r++] = res;
-					}
-				}
-			}
-			return multiple?mres:null;
 		};
 
 		/**

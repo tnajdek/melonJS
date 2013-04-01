@@ -89,10 +89,15 @@
 			// clear out the flags and set the tileId
 			this.tileId &= ~(FlippedHorizontallyFlag | FlippedVerticallyFlag | FlippedAntiDiagonallyFlag);
 
+			// private collision properties
+			this._collisionCells = [];
+			this._collisionRange = this; // reference this rectangle
+
+			this.collisionMask = 0;
 		}
 	});
 	
-    /**
+	/**
 	 * a TMX Tile Set Object
 	 * @class
 	 * @memberOf me
@@ -435,7 +440,7 @@
 		getTilesetByIndex : function(i) {
 			return this.tilesets[i];
 		},
-	   
+
 		/**
 		 * return the tileset corresponding to the specified id <br>
 		 * will throw an exception if no matching tileset is found

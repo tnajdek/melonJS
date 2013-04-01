@@ -67,24 +67,14 @@
 		 */
 		spriteheight : null,
 
-
 		/**
-		 * custom type for collision detection<br>
+		 * Mask collision detection for this object<br>
 		 * OPTIONAL
 		 * @public
-		 * @type String
-		 * @name me.ObjectSettings#type
+		 * @type Number
+		 * @name me.ObjectSettings#collisionMask
 		 */
-		type : 0,
-
-		/**
-		 * Enable collision detection for this object<br>
-		 * OPTIONAL
-		 * @public
-		 * @type Boolean
-		 * @name me.ObjectSettings#collidable
-		 */
-		collidable : true
+		collisionMask : 0xFFFFFFFF
 	};
 
 
@@ -307,12 +297,12 @@
 	me.ObjectEntity = me.Renderable.extend(
 	/** @scope me.ObjectEntity.prototype */ {
 	
-	   /**
-		* Entity "Game Unique Identifier"<br>
-		* @public
-		* @type String
-		* @name me.ObjectEntity#GUID
-		*/
+		/**
+		 * Entity "Game Unique Identifier"<br>
+		 * @public
+		 * @type String
+		 * @name me.ObjectEntity#GUID
+		 */
 		GUID : null,
 
 		/**
@@ -325,15 +315,14 @@
 		type : 0,
 
 		/**
-		 * flag to enable collision detection for this object<br>
-		 * default value : true<br>
+		 * mask to enable collision detection for this object<br>
+		 * default value : 0xFFFFFFFF<br>
 		 * @public
-		 * @type Boolean
-		 * @name me.ObjectEntity#collidable
+		 * @type Number
+		 * @name me.ObjectEntity#collisionMask
 		 */
-		collidable : true,
-		
-		
+		collisionMask : 0xFFFFFFFF,
+
 		/**
 		 * Entity collision Box<br>
 		 * @public
@@ -341,6 +330,31 @@
 		 * @name me.ObjectEntity#collisionBox
 		 */
 		collisionBox : null,
+
+		/**
+		 * List of spacial grid cells Entity belongs to<br>
+		 * @private
+		 * @type Array
+		 * @name me.ObjectEntity#_collisionCells
+		 */
+		_collisionCells : null,
+
+		/**
+		 * Entity collision range of motion<br>
+		 * @private
+		 * @type me.Rect
+		 * @name me.ObjectEntity#_collisionRange
+		 */
+		_collisionRange : null,
+
+		/**
+		 * List of other objects possibly colliding<br>
+		 * (from broad phase collision detection)<br>
+		 * @private
+		 * @type Array
+		 * @name me.ObjectEntity#_collisionWith
+		 */
+		_collisionWith : null,
 
 		/**
 		 * The entity renderable object (if defined)
@@ -497,19 +511,24 @@
 			this.disableTopLadderCollision = false;
 
 			// to enable collision detection			
-			this.collidable = typeof(settings.collidable) !== "undefined" ?
-				settings.collidable : true;
+			this.collisionMask = typeof(settings.collisionMask) !== "undefined" ?
+				settings.collisionMask : 0xFFFFFFFF;
 			//this.collectable = false;
 
-			this.type = settings.type || 0;
-			
+			// private collision properties
+			this._collisionCells = [];
+			this._collisionRange = this.getRect();
+			this._collisionWith = [];
 
-			// ref to the collision map
-			this.collisionMap = me.game.collisionMap;
-			
-			// create a a default collision rectangle
+			// create a default collision rectangle
 			this.collisionBox = new me.Rect(this.pos, this.width, this.height);
-			
+
+			// Set collision type
+			this.type = settings.type || me.collision.types.NO_OBJECT;
+
+			// Set initial position in collision spacial grid
+			me.collision.updateMovement(this);
+
 			// to know if our object can break tiles
 			/**
 			 * Define if an entity can go through breakable tiles<br>
@@ -544,27 +563,12 @@
 		},
 
 		/**
-		 * onCollision Event function<br>
-		 * called by the game manager when the object collide with shtg<br>
-		 * by default, if the object type is Collectable, the destroy function is called
-		 * @param {me.Vector2d} res collision vector
-		 * @param {me.ObjectEntity} obj the other object that hit this object
-		 * @protected
-		 */
-		onCollision : function(res, obj) {
-			// destroy the object if collectable
-			if (this.collidable	&& (this.type == me.game.COLLECTABLE_OBJECT))
-				me.game.remove(this);
-		},
-
-		/**
 		 * set the entity default velocity<br>
 		 * note : velocity is by default limited to the same value, see setMaxVelocity if needed<br>
 		 * @param {Int} x velocity on x axis
 		 * @param {Int} y velocity on y axis
 		 * @protected
 		 */
-
 		setVelocity : function(x, y) {
 			this.accel.x = (x != 0) ? x : this.accel.x;
 			this.accel.y = (y != 0) ? y : this.accel.y;
@@ -857,87 +861,18 @@
 		updateMovement : function() {
 
 			this.computeVelocity(this.vel);
-			
-			// Adjust position only on collidable object
-			if (this.collidable) {
-				// check for collision
-				var collision = this.collisionMap.checkCollision(this.collisionBox, this.vel);
 
-				// update some flags
-				this.onslope  = collision.yprop.isSlope || collision.xprop.isSlope;
-				// clear the ladder flag
-				this.onladder = false;
+			if (this.vel.x === 0 && this.vel.y === 0)
+				return [];
 
+			// Update position in collision spacial grid
+			me.collision.updateMovement(this);
 
+			// Check for collisions
+			var collision = me.collision.check(this);
 
-				// y collision
-				if (collision.y) {
-					// going down, collision with the floor
-					this.onladder = collision.yprop.isLadder || collision.yprop.isTopLadder;
-
-					if (collision.y > 0) {
-						if (collision.yprop.isSolid	|| 
-							(collision.yprop.isPlatform && (this.collisionBox.bottom - 1 <= collision.ytile.pos.y)) ||
-							(collision.yprop.isTopLadder && !this.disableTopLadderCollision)) {
-							// adjust position to the corresponding tile
-							this.pos.y = ~~this.pos.y;
-							this.vel.y = (this.falling) ?collision.ytile.pos.y - this.collisionBox.bottom: 0 ;
-							this.falling = false;
-						}
-						else if (collision.yprop.isSlope && !this.jumping) {
-							// we stop falling
-							this.checkSlope(collision.ytile, collision.yprop.isLeftSlope);
-							this.falling = false;
-						}
-						else if (collision.yprop.isBreakable) {
-							if  (this.canBreakTile) {
-								// remove the tile
-								me.game.currentLevel.clearTile(collision.ytile.col, collision.ytile.row);
-								if (this.onTileBreak)
-									this.onTileBreak();
-							}
-							else {
-								// adjust position to the corresponding tile
-								this.pos.y = ~~this.pos.y;
-								this.vel.y = (this.falling) ?collision.ytile.pos.y - this.collisionBox.bottom: 0;
-								this.falling = false;
-							}
-						}
-					}
-					// going up, collision with ceiling
-					else if (collision.y < 0) {
-						if (!collision.yprop.isPlatform	&& !collision.yprop.isLadder && !collision.yprop.isTopLadder) {
-							this.falling = true;
-							// cancel the y velocity
-							this.vel.y = 0;
-						}
-					}
-				}
-
-				// x collision
-				if (collision.x) {
-
-					this.onladder = collision.xprop.isLadder || collision.yprop.isTopLadder;
-
-					if (collision.xprop.isSlope && !this.jumping) {
-						this.checkSlope(collision.xtile, collision.xprop.isLeftSlope);
-						this.falling = false;
-					} else {
-						// can walk through the platform & ladder
-						if (!collision.xprop.isPlatform && !collision.xprop.isLadder && !collision.xprop.isTopLadder) {
-							if (collision.xprop.isBreakable	&& this.canBreakTile) {
-								// remove the tile
-								me.game.currentLevel.clearTile(collision.xtile.col, collision.xtile.row);
-								if (this.onTileBreak) {
-									this.onTileBreak();
-								}
-							} else {
-								this.vel.x = 0;
-							}
-						}
-					}
-				}
-			}
+			// Reset temporary collision results
+			this._collisionWith = [];
 
 			// update player position
 			this.pos.add(this.vel);
@@ -946,57 +881,26 @@
 			return collision;
 
 		},
-		
-		/**
-		 * Checks if this entity collides with others entities.
-		 * @public
-		 * @function
-		 * @param {Boolean} [multiple=false] check for multiple collision
-		 * @return {me.Vector2d} collision vector or an array of collision vector (if multiple collision){@link me.Rect#collideVsAABB}
-		 * @example
-		 * // update player movement
-		 * this.updateMovement();
-		 *
-		 * // check for collision with other objects
-		 * res = this.collide();
-		 *
-		 * // check if we collide with an enemy :
-		 * if (res && (res.obj.type == me.game.ENEMY_OBJECT))
-		 * {
-		 *   if (res.x != 0)
-		 *   {
-		 *      // x axis
-		 *      if (res.x<0)
-		 *         console.log("x axis : left side !");
-		 *      else
-		 *         console.log("x axis : right side !");
-		 *   }
-		 *   else
-		 *   {
-		 *      // y axis
-		 *      if (res.y<0)
-		 *         console.log("y axis : top side !");
-		 *      else
-		 *         console.log("y axis : bottom side !");
-		 *   }
-		 * }
-		 */
-		collide : function(multiple) {
-			return me.game.collide(this, multiple || false);
-		},
 
 		/**
-		 * Checks if the specified entity collides with others entities of the specified type.
-		 * @public
-		 * @function
-		 * @param {String} type Entity type to be tested for collision
-		 * @param {Boolean} [multiple=false] check for multiple collision
-		 * @return {me.Vector2d} collision vector or an array of collision vector (multiple collision){@link me.Rect#collideVsAABB}
+		 * onCollision Event function<br>
+		 * called by the game manager when the object collide with shtg<br>
+		 * by default, if the object type is Collectable, the destroy function is called
+		 * @param {me.Vector2d} res collision vector
+		 * @param {me.ObjectEntity} obj the other object that hit this object
+		 * @protected
 		 */
-		collideType : function(type, multiple) {
-			return me.game.collideType(this, type, multiple || false);
+		onCollision : function(res, obj) {
+			// destroy the object if collectable
+			if (this.type == me.collision.types.COLLECTABLE_OBJECT) {
+				me.game.remove(this);
+				return;
+			}
+
+			// FIXME: Handle collision with tiles
+			this.vel.setZero();
 		},
-		
+
 		/** @private */
 		update : function() {
 			if (this.renderable) {
@@ -1064,8 +968,18 @@
 				this.renderable = null;
 			}
 			this.onDestroyEvent.apply(this, arguments);
+
+			// Remove this from all collision cells
+			this._collisionCells.slice(0).forEach((function (cell) {
+				me.collision.remove(this, cell);
+			}).bind(this));
+
+			// Free memory
 			this.pos = null;
 			this.collisionBox = null;
+			this._collisionCells = null;
+			this._collisionRange = null;
+			this._collisionWith = null;
 		},
 
 		/**
@@ -1101,7 +1015,7 @@
 			// call the parent constructor
 			this.parent(x, y, settings);
 
-			this.type = me.game.COLLECTABLE_OBJECT;
+			this.type = me.collision.types.COLLECTABLE_OBJECT;
 
 		}
 	});

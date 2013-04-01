@@ -174,10 +174,14 @@
 			};
 
 			// return a fake collision layer if not found
-			if ((name.toLowerCase().contains(me.COLLISION_LAYER)) && (layer == null)) {
+			if (layer == null &&
+				name.contains(me.COLLISION_LAYER)) {
 				layer = new me.CollisionTiledLayer(
-					me.game.currentLevel.width,
-					me.game.currentLevel.height
+					this.cols,
+					this.rows,
+					this.tilewidth,
+					this.tileheight,
+					this.tilesets
 				);
 			}
 

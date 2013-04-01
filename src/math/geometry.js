@@ -500,6 +500,22 @@
 		},
 
 		/**
+		 * add a vector to this rect
+		 * @param {me.Vector2d} v vector offset
+		 * @return {me.Rect} new rectangle
+		 */
+		addV : function(/** {me.Vector2d} */ v) {
+			return new me.Rect(
+				new me.Vector2d(
+					Math.min(this.pos.x, this.pos.x + v.x),
+					Math.min(this.pos.y, this.pos.y + v.y)
+				),
+				this.width + Math.abs(v.x),
+				this.height + Math.abs(v.y)
+			);
+		},
+
+		/**
 		 * merge this rectangle with another one
 		 * @param {me.Rect} rect other rectangle to union with
 		 * @return {me.Rect} the union(ed) rectangle	 

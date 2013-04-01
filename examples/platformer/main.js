@@ -41,8 +41,9 @@ var game = {
 		me.video.setImageSmoothing(false);
 		
 		// install the debug panel plugin
-		//me.plugin.register(debugPanel, "debug");
-		
+		me.plugin.register(debugPanel, "debug");
+		me.debug.renderCollisionGrid = true;
+
 		// initialize the "sound engine"
 		me.audio.init("mp3,ogg");
 		

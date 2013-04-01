@@ -31,7 +31,8 @@ files = [
 	'./src/level/LevelDirector.js',
 	'./src/vendors/tween.js',
 	'./src/vendors/minpubsub.src.js',
-	'./src/plugin/plugin.js']
+	'./src/plugin/plugin.js',
+	'./src/entity/collision.js']
 
 version = require './src/version.js'
 
