@@ -606,16 +606,8 @@ var me = me || {};
 	 *
 	 */
 	Object.prototype.isObject = function(obj) {
-		try {
-			return !!(
-				!Array.isArray(obj) &&
-				Array.isArray(Object.keys(obj)) &&
-				typeof(obj) === "object"
-			);
-		}
-		catch (e) {
-			return false;
-		}
+		return (obj !== undefined && 
+			(obj !== null && typeof(obj) === "object" && !Array.isArray(obj))); // Boolean
 	};
 
 
@@ -791,6 +783,18 @@ var me = me || {};
 			for (var i = 0, j = this.length; j--; i++) {
 				callback.call(scope || this, this[i], i, this);
 			}
+		};
+	}
+	
+	if (!Array.isArray) {
+		/**
+		 * provide a replacement for browsers that don't
+		 * support Array.prototype.isArrat (ES5 15.4.3.2)
+		 * https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Array/isArray
+		 * @private
+		 */
+		Array.isArray = function isArray(obj) {
+			return _toString(obj) == "[object Array]";
 		};
 	}
 
