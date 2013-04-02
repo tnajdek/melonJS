@@ -180,6 +180,22 @@ var me = me || {};
 		 */
 		preRender : false,
 
+		/**
+		 * Default width of collision grid cells<br>
+		 * Only used if `gridwidth` property is not set on the map<br>
+		 * @type Number
+		 * @memberOf me.sys
+		 */
+		collisionGridWidth : 0,
+
+		/**
+		 * Default height of collision grid cells<br>
+		 * Only used if `gridheight` property is not set on the map<br>
+		 * @type Number
+		 * @memberOf me.sys
+		 */
+		collisionGridHeight : 0,
+
 		// System methods
 		/**
 		 * Compare two version strings
