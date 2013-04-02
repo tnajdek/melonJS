@@ -58,15 +58,13 @@ me.collision = (function() {
      */
     (Object.defineProperty(api, "gridwidth", {
         get : function() {
-            try {
-                return (
-                    me.game.currentLevel.gridwidth ||
-                    (me.game.collisionMap.tilewidth * 4)
-                );
-            }
-            catch (e) {
-                return 128;
-            }
+            var layer = me.game.collisionMap;
+            return (
+                me.game.currentLevel.gridwidth ||
+                me.sys.collisionGridWidth ||
+                (layer && (layer.tilewidth * 4)) ||
+                128
+            );
         }
     }));
 
@@ -78,15 +76,13 @@ me.collision = (function() {
      */
     (Object.defineProperty(api, "gridheight", {
         get : function() {
-            try {
-                return (
-                    me.game.currentLevel.gridheight ||
-                    (me.game.collisionMap.tileheight * 4)
-                );
-            }
-            catch (e) {
-                return 128;
-            }
+            var layer = me.game.collisionMap;
+            return (
+                me.game.currentLevel.gridheight ||
+                me.sys.collisionGridHeight ||
+                (layer && (layer.tileheight * 4)) ||
+                128
+            );
         }
     }));
 
