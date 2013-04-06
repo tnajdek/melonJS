@@ -1202,7 +1202,7 @@ var me = me || {};
 				api.init();
 
 			// remove all objects
-			api.removeAll();
+			api.removeAll(true);
 
 			// reset the viewport to zero ?
 			if (api.viewport)
@@ -1485,43 +1485,51 @@ var me = me || {};
 		 * @public
 		 * @function
 		 * @param {me.ObjectEntity} obj Object to be removed
-		 * @param {Boolean} force force immediate deletion
+		 * @param {Boolean=false} force Force immediate deletion.<br>
+		 * <strong>WARNING</strong>: Not safe to force asynchronously (e.g. onCollision callbacks)
 		 */
 		api.remove = function(obj, force) {
-			
-			// notify the object it will be destroyed
-			if (obj.destroy) {
-				obj.destroy();
+
+			// Private function to do object removal
+			function removeNow(target) {
+				// notify the object it will be destroyed
+				if (target.destroy) {
+					target.destroy();
+				}
+
+				// remove the object from the object to draw
+				drawManager.remove(target);
+
+				// Remove the object
+				gameObjects.remove(target);
+				me.entityPool.freeInstance(target);
 			}
-			
-			// remove the object from the object to draw
-			drawManager.remove(obj);
-			
+
 			// remove the object from the object list
 			if (force===true) {
 				// force immediate object deletion
-				gameObjects.remove(obj);
-				me.entityPool.freeInstance(obj);
+				removeNow(obj);
 			} else {
 				// make it invisible (this is bad...)
 				obj.visible = false;
 				// else wait the end of the current loop
 				/** @private */
 				pendingRemove = (function (obj) {
-					gameObjects.remove(obj);
-					me.entityPool.freeInstance(obj);
+					removeNow(obj);
 					pendingRemove = null;
 				}).defer(obj);
 			}
 		};
 
 		/**
-		 * remove all objects
+		 * remove all objects<br>
 		 * @name me.game#removeAll
+		 * @param {Boolean=false} force Force immediate deletion.<br>
+		 * <strong>WARNING</strong>: Not safe to force asynchronously (e.g. onCollision callbacks)
 		 * @public
 		 * @function
 		 */
-		api.removeAll = function() {
+		api.removeAll = function(force) {
 			//cancel any pending tasks
 			if (pendingRemove) {
 				clearTimeout(pendingRemove);
@@ -1539,10 +1547,11 @@ var me = me || {};
 				   continue;
 				}
 				// remove the entity
-				api.remove(gameObjects[i], true);
+				api.remove(gameObjects[i], force);
 			}
 			// make sure it's empty there as well
-			drawManager.flush();
+			if (force === true)
+				drawManager.flush();
 		};
 
 		/**
