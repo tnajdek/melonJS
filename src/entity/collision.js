@@ -245,6 +245,11 @@ me.collision = (function() {
 
         /* Broad phase */
 
+        // FIXME: SLOW!!!
+        // IDEA: generate a "hash" string from the indices of the four corner
+        // cells. Join the numbers with commas. Compare the hash before updating
+        // any cells.
+
         // Update collision range of motion
         obj._collisionRange = obj.collisionBox.getRect().addV(obj.vel);
         obj._collisionRange.pos.add(obj.collisionBox.colPos);
@@ -297,7 +302,7 @@ me.collision = (function() {
     api.check = function (objA) {
 
         /* Narrow phase */
-        var result = [];
+        var result = {};
 
         // Iterate each collision cell
         objA._collisionCells.forEach(function (cell) {
@@ -305,7 +310,7 @@ me.collision = (function() {
             cell.objects.forEach(function (objB) {
 
                 // Skip this object and previously handled objects
-                if (objA === objB || result.indexOf(objB) >= 0 ||
+                if (objA === objB || objB in result ||
                     // And masked objects
                     objA.collisionMask & objB.collisionMask === 0 ||
                     // And objects that fail the AABB test
@@ -314,26 +319,11 @@ me.collision = (function() {
                     return;
                 }
 
-                if (typeof(objB._collisionWith) !== "undefined") {
-                    // objB is a me.ObjectEntity
+                // Record collision
+                result[objB] = true;
 
-                    // Record collision
-                    result.push(objB);
-                    objB._collisionWith.push(objA);
-
-                    // FIXME
-                    objA.onCollision(null, objB);
-                    objB.onCollision(null, objA);
-                }
-                else {
-                    // objB is a me.Tile
-
-                    // Record collision
-                    result.push(objB);
-
-                    // FIXME
-                    objA.onCollision(null, objB);
-                }
+                // FIXME
+                objA.onCollision(null, objB);
             });
         });
 
@@ -367,7 +357,7 @@ me.collision = (function() {
         for (var x = start.x, dx = x * gridwidth; x < end.x; x++) {
             for (var y = start.y, dy = y * gridheight; y < end.y; y++) {
                 // Opacity is based on number of objects in the cell
-                context.globalAlpha = (grid[x][y].objects.length / 16).clamp(0, 1);
+                context.globalAlpha = (grid[x][y].objects.length / 32).clamp(0, 1);
 
                 context.fillRect(dx, dy, gridwidth, gridheight);
                 dy += gridwidth;
