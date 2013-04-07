@@ -345,17 +345,6 @@ me.collision = (function() {
     };
 
     /**
-     * Returns the amount of object considered for collision per frame<br>
-     * @name me.collision#getObjectCount
-     * @protected
-     * @function
-     * @return {Number} the amount of objects in the collision spacial grid
-     */
-    api.getObjectCount = function() {
-        return objectCount;
-    };
-
-    /**
      * Perform collision detection for a given object.<br>
      * @name me.collision#check
      * @private
@@ -388,12 +377,58 @@ me.collision = (function() {
                 // Record collision
                 result[objB] = true;
 
-                // FIXME
-                objA.onCollision(null, objB);
+                // Notify objA of collision with objB
+                objA.onCollision(objB);
             }
         }
 
         return result;
+    };
+
+    /**
+     * Returns the number of objects considered for collision per frame<br>
+     * @name me.collision#getObjectCount
+     * @protected
+     * @function
+     * @return {Number} total number of objects in the collision spacial grid
+     */
+    api.getObjectCount = function() {
+        return objectCount;
+    };
+
+    /**
+     * Returns the penetration depth between two colliding objects<br>
+     * @name me.collision#getDepth
+     * @protected
+     * @function
+     * @return {me.Vector2d} A vector describing how the objects collide
+     * @example
+     * var depth = me.collision.getDepth(this, obj);
+     * if (Math.abs(depth.x) > Math.abs(depth.y)) {
+     *     if (depth.x < 0) {
+     *         // Collision at the left
+     *     }
+     *     else {
+     *         // Collision at the right
+     *     }
+     * }
+     * else if (depth.y < 0) {
+     *     // Collision at the top
+     * }
+     * else {
+     *     // Collision at the bottom
+     * }
+     */
+    api.getDepth = function (objA, objB) {
+        // TODO: Check with different-sized objects
+        return new me.Vector2d(
+            (objA.left < objB.left) ?
+                (objB.left - (objA.right + objA.vel.x)) : // Moving right
+                (objB.right - (objA.left + objA.vel.x)),  // Moving left
+            (objA.top < objB.top) ?
+                (objB.top - (objA.bottom + objA.vel.y)) : // Moving down
+                (objB.bottom - (objA.top + objA.vel.y))   // Moving up
+        );
     };
 
     /**

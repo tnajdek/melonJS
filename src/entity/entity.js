@@ -809,7 +809,7 @@
 
 		/**
 		 * handle the player movement, "trying" to update his position<br>
-		 * @return {me.Vector2d} a collision vector
+		 * @return {me.Vector2d} a collision vector FIXME
 		 * @example
 		 * // make the player move
 		 * if (me.input.isKeyPressed('left'))
@@ -851,7 +851,7 @@
 
 			this.computeVelocity(this.vel);
 
-			if (this.vel.x === 0 && this.vel.y === 0)
+			if (~~this.vel.x === 0 && ~~this.vel.y === 0)
 				return [];
 
 			// Update position in collision spacial grid
@@ -872,19 +872,27 @@
 		 * onCollision Event function<br>
 		 * called by the game manager when the object collide with shtg<br>
 		 * by default, if the object type is Collectable, the destroy function is called
-		 * @param {me.Vector2d} res collision vector FIXME
 		 * @param {me.ObjectEntity} obj the other object that hit this object
 		 * @protected
 		 */
-		onCollision : function(res, obj) {
+		onCollision : function(obj) {
 			// destroy the object if collectable
 			if (this.type == me.collision.types.COLLECTABLE_OBJECT) {
 				me.game.remove(this);
 				return;
 			}
 
-			// FIXME: Handle collision with tiles
-			this.vel.setZero();
+			// Calculate a reaction vector
+			// FIXME: This is not quite right. The reactions do strange things.
+			var vel = this.vel.clone();
+			var depth = me.collision.getDepth(this, obj);
+
+			vel.normalize();
+			vel.abs();
+			vel.scale(depth);
+
+			this.vel.add(vel);
+			this.vel.floorSelf();
 		},
 
 		/** @private */

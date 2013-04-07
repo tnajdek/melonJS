@@ -229,7 +229,7 @@
 		 * return the lenght (magnitude) of this vector
 		 * @return {Number}
 		 */		
-		 length : function() {
+		length : function() {
 			return Math.sqrt(this.x * this.x + this.y * this.y);
 		},
 
@@ -449,7 +449,9 @@
 			
 			Object.defineProperty(this, "right", {
 				get : function() {
-					return this.pos.x + this.width + Math.abs(this.rangeV.x);
+					var x = this.pos.x + this.width;
+					var xv = x + this.rangeV.x;
+					return x > xv ? x : xv;
 				},
 				configurable : true
 			});
@@ -465,7 +467,9 @@
 
 			Object.defineProperty(this, "bottom", {
 				get : function() {
-					return this.pos.y + this.height + Math.abs(this.rangeV.y);
+					var y = this.pos.y + this.height;
+					var yv = y + this.rangeV.y;
+					return y > yv ? y : yv;
 				},
 				configurable : true
 			});
@@ -569,7 +573,6 @@
 					// redefine our properties taking colPos into account
 					Object.defineProperty(this, "left", {
 						get : function() {
-							//return this.pos.x + this.colPos.x;
 							var x = this.pos.x + this.colPos.x;
 							var xv = x + this.rangeV.x;
 							return x < xv ? x : xv;
@@ -580,8 +583,9 @@
 				if (this.right !== this.pos.x + this.colPos.x + this.width) {
 					Object.defineProperty(this, "right", {
 						get : function() {
-							return this.pos.x + this.colPos.x + this.width +
-								Math.abs(this.rangeV.x);
+							var x = this.pos.x + this.colPos.x + this.width;
+							var xv = x + this.rangeV.x;
+							return x > xv ? x : xv;
 						},
 						configurable : true
 					});
@@ -597,7 +601,6 @@
 					// redefine our properties taking colPos into account
 					Object.defineProperty(this, "top", {
 						get : function() {
-							//return this.pos.y + this.colPos.y;
 							var y = this.pos.y + this.colPos.y;
 							var yv = y + this.rangeV.y;
 							return y < yv ? y : yv;
@@ -608,8 +611,9 @@
 				if (this.bottom !== this.pos.y + this.colPos.y + this.height) {
 					Object.defineProperty(this, "bottom", {
 						get : function() {
-							return this.pos.y + this.colPos.y + this.height +
-								Math.abs(this.rangeV.y);
+							var y = this.pos.y + this.colPos.y + this.height;
+							var yv = y + this.rangeV.y;
+							return y > yv ? y : yv;
 						},
 						configurable : true
 					});
@@ -697,62 +701,6 @@
 		containsPoint: function(v) {
 			return  (v.x >= this.left && v.x <= this.right && 
 					(v.y >= this.top) && v.y <= this.bottom)
-		},
-
-
-		/**
-		 * AABB vs AABB collission dectection<p>
-		 * If there was a collision, the return vector will contains the following values: 
-		 * @example
-		 * if (v.x != 0 || v.y != 0)
-		 * { 	
-		 *   if (v.x != 0)
-		 *   {
-		 *      // x axis
-		 *      if (v.x<0)
-		 *         console.log("x axis : left side !");
-		 *      else
-		 *         console.log("x axis : right side !");
-		 *   }
-		 *   else
-		 *   {
-		 *      // y axis
-		 *      if (v.y<0)
-		 *         console.log("y axis : top side !");
-		 *      else
-		 *         console.log("y axis : bottom side !");			
-		 *   }
-		 *		
-		 * }
-		 * @private
-		 * @param {me.Rect} rect
-		 * @return {me.Vector2d} 
-		 */
-		collideVsAABB : function(/** {me.Rect} */ rect) {
-			// response vector
-			var p = new me.Vector2d(0, 0);
-
-			// check if both box are overlaping
-			if (this.overlaps(rect)) {
-				// compute delta between this & rect
-				var dx = this.left + this.hWidth  - rect.left - rect.hWidth;
-				var dy = this.top  + this.hHeight - rect.top  - rect.hHeight;
-
-				// compute penetration depth for both axis
-				p.x = (rect.hWidth + this.hWidth) - (dx < 0 ? -dx : dx); // - Math.abs(dx);
-				p.y = (rect.hHeight + this.hHeight)
-						- (dy < 0 ? -dy : dy); // - Math.abs(dy);
-
-				// check and "normalize" axis
-				if (p.x < p.y) {
-					p.y = 0;
-					p.x = dx < 0 ? -p.x : p.x;
-				} else {
-					p.x = 0;
-					p.y = dy < 0 ? -p.y : p.y;
-				}
-			}
-			return p;
 		},
 
 		/**
