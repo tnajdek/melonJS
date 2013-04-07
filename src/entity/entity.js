@@ -332,29 +332,12 @@
 		collisionBox : null,
 
 		/**
-		 * List of spacial grid cells Entity belongs to<br>
+		 * Private collision state<br>
 		 * @private
-		 * @type Array
-		 * @name me.ObjectEntity#_collisionCells
+		 * @type Object
+		 * @name me.ObjectEntity#_collision
 		 */
-		_collisionCells : null,
-
-		/**
-		 * Entity collision range of motion<br>
-		 * @private
-		 * @type me.Rect
-		 * @name me.ObjectEntity#_collisionRange
-		 */
-		_collisionRange : null,
-
-		/**
-		 * List of other objects possibly colliding<br>
-		 * (from broad phase collision detection)<br>
-		 * @private
-		 * @type Array
-		 * @name me.ObjectEntity#_collisionWith
-		 */
-		_collisionWith : null,
+		_collision : null,
 
 		/**
 		 * The entity renderable object (if defined)
@@ -515,13 +498,16 @@
 				settings.collisionMask : 0xFFFFFFFF;
 			//this.collectable = false;
 
-			// private collision properties
-			this._collisionCells = [];
-			this._collisionRange = this.getRect();
-			this._collisionWith = [];
-
 			// create a default collision rectangle
 			this.collisionBox = new me.Rect(this.pos, this.width, this.height);
+
+			// private collision properties
+			this._collision = {
+				hash : "",
+				cells : [],
+				range : new me.Rect(this.pos, this.width, this.height)
+			};
+			this._collision.range.addV(this.vel);
 
 			// Set collision type
 			this.type = settings.type || me.collision.types.NO_OBJECT;
@@ -560,6 +546,7 @@
 		 */
 		updateColRect : function(x, w, y, h) {
 			this.collisionBox.adjustSize(x, w, y, h);
+			this._collision.range.adjustSize(x, w, y, h);
 		},
 
 		/**
@@ -612,6 +599,7 @@
 
 				// flip the collision box
 				this.collisionBox.flipX(this.width);
+				this._collision.range.flipX(this.width);
 			}
 		},
 
@@ -627,6 +615,7 @@
 				}
 				// flip the collision box
 				this.collisionBox.flipY(this.height);
+				this._collision.range.flipY(this.height);
 			}
 		},
 
@@ -871,9 +860,6 @@
 			// Check for collisions
 			var collision = me.collision.check(this);
 
-			// Reset temporary collision results
-			this._collisionWith = [];
-
 			// update player position
 			this.pos.add(this.vel);
 
@@ -886,7 +872,7 @@
 		 * onCollision Event function<br>
 		 * called by the game manager when the object collide with shtg<br>
 		 * by default, if the object type is Collectable, the destroy function is called
-		 * @param {me.Vector2d} res collision vector
+		 * @param {me.Vector2d} res collision vector FIXME
 		 * @param {me.ObjectEntity} obj the other object that hit this object
 		 * @protected
 		 */
@@ -970,16 +956,12 @@
 			this.onDestroyEvent.apply(this, arguments);
 
 			// Remove this from all collision cells
-			this._collisionCells.slice(0).forEach((function (cell) {
-				me.collision.remove(this, cell);
-			}).bind(this));
+			me.collision.remove(this);
 
 			// Free memory
 			this.pos = null;
 			this.collisionBox = null;
-			this._collisionCells = null;
-			this._collisionRange = null;
-			this._collisionWith = null;
+			this._collision = null;
 		},
 
 		/**

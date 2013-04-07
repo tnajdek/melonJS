@@ -90,8 +90,10 @@
 			this.tileId &= ~(FlippedHorizontallyFlag | FlippedVerticallyFlag | FlippedAntiDiagonallyFlag);
 
 			// private collision properties
-			this._collisionCells = [];
-			this._collisionRange = this; // reference this rectangle
+			this._collision = {
+				cells : [],
+				range : this // reference this rectangle
+			};
 
 			this.collisionMask = 0;
 		}

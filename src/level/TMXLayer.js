@@ -560,7 +560,7 @@
 		 */
 		setTile : function(x, y, tileId) {
 			// Remove old tile from collision spacial grid
-			me.collision.remove(this.layerData[x][y], x, y);
+			me.collision.remove(this.layerData[x][y]);
 
 			// Get collisionMask property for new tile
 			var tile = new me.Tile(x, y, this.tilewidth, this.tileheight, tileId);
@@ -573,8 +573,7 @@
 				);
 
 				// Add new tile to collision spacial grid
-				// FIXME: wrong x/y coords! Also may need to add to more than one cell!
-				me.collision.add(tile, x, y);
+				me.collision.add(tile);
 			}
 
 			// Update layer data with new tile
@@ -591,10 +590,7 @@
 		 */
 		clearTile : function(x, y) {
 			// Remove old tile from collision spacial grid
-			var old = this.layerData[x][y];
-			old._collisionCells.slice(0).forEach(function (cell) {
-				me.collision.remove(old, cell);
-			})
+			me.collision.remove(this.layerData[x][y]);
 
 			// clearing tile
 			this.layerData[x][y] = null;

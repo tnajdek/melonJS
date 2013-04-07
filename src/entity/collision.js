@@ -47,7 +47,7 @@ me.collision = (function() {
     };
 
     // Spacial grid
-    var grid = null;
+    var grid = [];
     var objectCount = 0;
 
     /**
@@ -62,7 +62,7 @@ me.collision = (function() {
             return (
                 me.game.currentLevel.gridwidth ||
                 me.sys.collisionGridWidth ||
-                (layer && (layer.tilewidth * 4)) ||
+                (layer && (layer.tilewidth * 2)) ||
                 128
             );
         }
@@ -80,7 +80,7 @@ me.collision = (function() {
             return (
                 me.game.currentLevel.gridheight ||
                 me.sys.collisionGridHeight ||
-                (layer && (layer.tileheight * 4)) ||
+                (layer && (layer.tileheight * 2)) ||
                 128
             );
         }
@@ -119,6 +119,17 @@ me.collision = (function() {
      * @function
      */
     api.reset = function () {
+        // Remove objects from old grid
+        // TODO: Verify this is necessary
+        for (var x = 0; x < grid.length; x++) {
+            for (var y = 0; y < grid[x].length; y++) {
+                while (grid[x][y].objects.length) {
+                    api.remove(grid[x][y].objects[0]);
+                }
+            }
+        }
+
+        // Reset object counter
         objectCount = 0;
 
         var cols = api.cols;
@@ -136,7 +147,7 @@ me.collision = (function() {
                     gridwidth,
                     gridheight
                 );
-                grid[x][y].objects = [];
+                grid[x][y].objects = []; // TODO: Use Object instead?
             }
         }
     };
@@ -152,17 +163,15 @@ me.collision = (function() {
         if (!layer)
             return;
 
+        var cols = layer.cols;
+        var rows = layer.rows;
         var gridwidth = api.gridwidth;
         var gridheight = api.gridheight;
 
         // Populate grid with me.Tile objects
-        for (var sx = 0; sx < layer.cols; sx++) {
-            var dx = ~~((sx * layer.tilewidth) / gridwidth);
-
-            for (var sy = 0; sy < layer.rows; sy++) {
-                var dy = ~~((sy * layer.tileheight) / gridheight);
-
-                var tile = layer.layerData[sx][sy];
+        for (var x = 0; x < cols; x++) {
+            for (var y = 0; y < rows; y++) {
+                var tile = layer.layerData[x][y];
                 if (!tile)
                     continue;
 
@@ -178,7 +187,7 @@ me.collision = (function() {
                         props.collisionmask : 0xFFFFFFFF
                     );
 
-                    api.add(tile, dx, dy);
+                    api.add(tile);
                 }
             }
         }
@@ -190,21 +199,24 @@ me.collision = (function() {
      * @public
      * @function
      * @param {me.ObjectEntity} obj Object to be added
-     * @param {Number} x Grid position X
-     * @param {Number} y Grid position Y
      */
-    api.add = function (obj /** x,y | cell */) {
+    api.add = function (obj) {
         objectCount++;
 
-        // Evaluate args
-        var cell = arguments[1];
-        if (!Object.isObject(cell)) {
-            cell = grid[cell][arguments[2]];
-        }
+        var cols = api.cols;
+        var rows = api.rows;
+        var gridwidth = api.gridwidth;
+        var gridheight = api.gridheight;
 
         // Add doubly-linked list
-        obj._collisionCells.push(cell);
-        cell.objects.push(obj);
+        api.addTo(
+            obj,
+            // TODO: Support floating objects
+            (~~(obj.left / gridwidth)).clamp(0, cols),
+            (~~(obj.top / gridheight)).clamp(0, rows),
+            Math.ceil(obj.right / gridwidth).clamp(0, cols),
+            Math.ceil(obj.bottom / gridheight).clamp(0, rows)
+        );
     };
 
     /**
@@ -213,20 +225,71 @@ me.collision = (function() {
      * @public
      * @function
      * @param {me.ObjectEntity} obj Object to be removed
-     * @param {Number} x Grid position X
-     * @param {Number} y Grid position Y
      */
-    api.remove = function (obj /** x,y | cell */) {
+    api.remove = function (obj) {
         objectCount--;
 
-        // Evaluate args
-        var cell = arguments[1];
-        if (!Object.isObject(cell))
-            cell = grid[cell][arguments[2]];
+        var cols = api.cols;
+        var rows = api.rows;
+        var gridwidth = api.gridwidth;
+        var gridheight = api.gridheight;
 
         // Remove doubly-linked list
-        obj._collisionCells.remove(cell);
-        cell.objects.remove(obj);
+        api.removeFrom(
+            obj,
+            // TODO: Support floating objects
+            (~~(obj.left / gridwidth)).clamp(0, cols),
+            (~~(obj.top / gridheight)).clamp(0, rows),
+            Math.ceil(obj.right / gridwidth).clamp(0, cols),
+            Math.ceil(obj.bottom / gridheight).clamp(0, rows)
+        );
+    };
+
+    /**
+     * Add an object to the spacial grid in the specified positions.<br>
+     * @name me.collision#addTo
+     * @rivate
+     * @function
+     * @param {me.ObjectEntity} obj Object to be added
+     * @param {Number} start_x Start position X-axis
+     * @param {Number} start_y Start position Y-axis
+     * @param {Number} end_x End position X-axis
+     * @param {Number} end_y End position Y-axis
+     */
+    api.addTo = function (obj, start_x, start_y, end_x, end_y) {
+        objectCount++;
+
+        for (var x = start_x; x < end_x; x++) {
+            for (var y = start_y; y < end_y; y++) {
+                var cell = grid[x][y];
+
+                obj._collision.cells.push(cell);
+                cell.objects.push(obj);
+            }
+        }
+    };
+
+    /**
+     * Remove an object from the spacial grid in the specified positions.<br>
+     * @name me.collision#removeFrom
+     * @rivate
+     * @function
+     * @param {me.ObjectEntity} obj Object to be removed
+     * @param {Number} start_x Start position X-axis
+     * @param {Number} start_y Start position Y-axis
+     * @param {Number} end_x End position X-axis
+     * @param {Number} end_y End position Y-axis
+     */
+    api.removeFrom = function (obj, start_x, start_y, end_x, end_y) {
+        objectCount--;
+
+        obj._collision.cells = [];
+
+        for (var x = start_x; x < end_x; x++) {
+            for (var y = start_y; y < end_y; y++) {
+                grid[x][y].objects.remove(obj);
+            }
+        }
     };
 
     /**
@@ -237,46 +300,47 @@ me.collision = (function() {
      * @param {me.ObjectEntity} obj Object to be updated
      */
     api.updateMovement = function (obj) {
-        // TODO: Determine if keeping the object list in a hash is faster than
-        // using an array.
-        // Because this will allow us to remove only the cells we know do not
-        // intersect with obj._collisionRange, and unconditionally add every
-        // object (without duplication)
-
         /* Broad phase */
+        // TODO: Support floating objects
 
-        // FIXME: SLOW!!!
-        // IDEA: generate a "hash" string from the indices of the four corner
-        // cells. Join the numbers with commas. Compare the hash before updating
-        // any cells.
-
-        // Update collision range of motion
-        obj._collisionRange = obj.collisionBox.getRect().addV(obj.vel);
-        obj._collisionRange.pos.add(obj.collisionBox.colPos);
-
-        // Remove from cells
-        obj._collisionCells.slice(0).forEach(function (cell) {
-            api.remove(obj, cell);
-        });
-
+        // Calculate position within spacial grid
+        var range = obj._collision.range;
+        var cols = api.cols;
+        var rows = api.rows;
         var gridwidth = api.gridwidth;
         var gridheight = api.gridheight;
 
-        var start = new me.Vector2d(
-            Math.max(obj._collisionRange.left / gridwidth, 0),
-            Math.max(obj._collisionRange.top / gridheight, 0)
-        ).floorSelf();
+        // Hash current position within spacial grid
+        var hash =
+            (~~(range.left / gridwidth)).clamp(0, cols) + "," +
+            (~~(range.top / gridheight)).clamp(0, rows) + "," +
+            Math.ceil(range.right / gridwidth).clamp(0, cols) + "," +
+            Math.ceil(range.bottom / gridheight).clamp(0, rows);
 
-        var end = new me.Vector2d(
-            Math.min(obj._collisionRange.right / gridwidth, api.cols),
-            Math.min(obj._collisionRange.bottom / gridheight, api.rows)
-        ).ceilSelf();
-
-        // Add to cells
-        for (var x = start.x; x < end.x; x++) {
-            for (var y = start.y; y < end.y; y++) {
-                api.add(obj, x, y);
+        // Check if grid needs to be updated
+        if (obj._collision.hash !== hash) {
+            // Remove from original spacial grid cells
+            if (obj._collision.cells.length) {
+                var removeArgs = obj._collision.hash.split(",").map(
+                    function (i) {
+                        return +i;
+                    }
+                );
+                removeArgs.unshift(obj);
+                api.removeFrom.apply(api, removeArgs);
             }
+
+            // Update hash
+            obj._collision.hash = hash;
+
+            var args = hash.split(",").map(
+                function (i) {
+                    return +i;
+                }
+            );
+            // Add to new spacial grid cells
+            args.unshift(obj);
+            api.addTo.apply(api, args);
         }
     };
 
@@ -305,18 +369,20 @@ me.collision = (function() {
         var result = {};
 
         // Iterate each collision cell
-        objA._collisionCells.forEach(function (cell) {
-            // Iterate each object in the cell
-            cell.objects.forEach(function (objB) {
+        for (var i = 0; i < objA._collision.cells.length; i++) {
+            var objects = objA._collision.cells[i].objects;
+
+            for (var j = 0; j < objects.length; j++) {
+                var objB = objects[j];
 
                 // Skip this object and previously handled objects
-                if (objA === objB || objB in result ||
+                if (result[objB] || objA === objB ||
                     // And masked objects
-                    objA.collisionMask & objB.collisionMask === 0 ||
+                    (objA.collisionMask & objB.collisionMask) === 0 ||
                     // And objects that fail the AABB test
-                    !objA._collisionRange.overlaps(objB._collisionRange)) {
+                    !objA._collision.range.overlaps(objB._collision.range)) {
 
-                    return;
+                    continue;
                 }
 
                 // Record collision
@@ -324,8 +390,8 @@ me.collision = (function() {
 
                 // FIXME
                 objA.onCollision(null, objB);
-            });
-        });
+            }
+        }
 
         return result;
     };
@@ -357,7 +423,7 @@ me.collision = (function() {
         for (var x = start.x, dx = x * gridwidth; x < end.x; x++) {
             for (var y = start.y, dy = y * gridheight; y < end.y; y++) {
                 // Opacity is based on number of objects in the cell
-                context.globalAlpha = (grid[x][y].objects.length / 32).clamp(0, 1);
+                context.globalAlpha = (grid[x][y].objects.length / 64).clamp(0, 1);
 
                 context.fillRect(dx, dy, gridwidth, gridheight);
                 dy += gridwidth;

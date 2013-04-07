@@ -321,9 +321,9 @@
 		pos : null,
 
 		/**
-		 * allow to reduce the collision box size<p>
-		 * while keeping the original position vector (pos)<p>
-		 * corresponding to the entity<p>
+		 * allow to reduce the collision box size<br>
+		 * while keeping the original position vector (pos)<br>
+		 * corresponding to the entity<br>
 		 * colPos is a relative offset to pos
 		 * @private
 		 * @type me.Vector2d
@@ -331,7 +331,17 @@
 		 * @see me.Rect#adjustSize
 		 */
 		colPos : null,
-		
+
+		/**
+		 * allow expanding and contracting the rect with a vector<br>
+		 * while keeping its original size and shape<br>
+		 * @private
+		 * @type me.Vector2d
+		 * @name me.Rect#rangeV
+		 * @see me.Rect#addV
+		 */
+		rangeV : null,
+
 		/**
 		 * Define the object anchoring point<br>
 		 * This is used when positioning, or scaling the object<br>
@@ -412,6 +422,10 @@
 			// corresponding to the entity
 			this.colPos = new me.Vector2d();
 
+			// Allow expanding and contracting the rect with a vector
+			// while keeping its original size and shape
+			this.rangeV = new me.Vector2d();
+
 			this.width = w;
 			this.height = h;
 
@@ -423,30 +437,35 @@
 			this.anchorPoint = new me.Vector2d(0.5, 0.5);
 
 			// redefine some properties to ease our life when getting the rectangle coordinates
+			// redefine some properties to ease our life when getting the rectangle coordinates
 			Object.defineProperty(this, "left", {
 				get : function() {
-					return this.pos.x;
+					var x = this.pos.x;
+					var xv = x + this.rangeV.x;
+					return x < xv ? x : xv;
 				},
 				configurable : true
 			});
 			
 			Object.defineProperty(this, "right", {
 				get : function() {
-					return this.pos.x + this.width;
+					return this.pos.x + this.width + Math.abs(this.rangeV.x);
 				},
 				configurable : true
 			});
 
 			Object.defineProperty(this, "top", {
 				get : function() {
-					return this.pos.y;
+					var y = this.pos.y;
+					var yv = y + this.rangeV.y;
+					return y < yv ? y : yv;
 				},
 				configurable : true
 			});
 
 			Object.defineProperty(this, "bottom", {
 				get : function() {
-					return this.pos.y + this.height;
+					return this.pos.y + this.height + Math.abs(this.rangeV.y);
 				},
 				configurable : true
 			});
@@ -505,14 +524,7 @@
 		 * @return {me.Rect} new rectangle
 		 */
 		addV : function(/** {me.Vector2d} */ v) {
-			return new me.Rect(
-				new me.Vector2d(
-					Math.min(this.pos.x, this.pos.x + v.x),
-					Math.min(this.pos.y, this.pos.y + v.y)
-				),
-				this.width + Math.abs(v.x),
-				this.height + Math.abs(v.y)
-			);
+			this.rangeV = v;
 		},
 
 		/**
@@ -557,7 +569,10 @@
 					// redefine our properties taking colPos into account
 					Object.defineProperty(this, "left", {
 						get : function() {
-							return this.pos.x + this.colPos.x;
+							//return this.pos.x + this.colPos.x;
+							var x = this.pos.x + this.colPos.x;
+							var xv = x + this.rangeV.x;
+							return x < xv ? x : xv;
 						},
 						configurable : true
 					});
@@ -565,7 +580,8 @@
 				if (this.right !== this.pos.x + this.colPos.x + this.width) {
 					Object.defineProperty(this, "right", {
 						get : function() {
-							return this.pos.x + this.colPos.x + this.width;
+							return this.pos.x + this.colPos.x + this.width +
+								Math.abs(this.rangeV.x);
 						},
 						configurable : true
 					});
@@ -581,7 +597,10 @@
 					// redefine our properties taking colPos into account
 					Object.defineProperty(this, "top", {
 						get : function() {
-							return this.pos.y + this.colPos.y;
+							//return this.pos.y + this.colPos.y;
+							var y = this.pos.y + this.colPos.y;
+							var yv = y + this.rangeV.y;
+							return y < yv ? y : yv;
 						},
 						configurable : true
 					});
@@ -589,7 +608,8 @@
 				if (this.bottom !== this.pos.y + this.colPos.y + this.height) {
 					Object.defineProperty(this, "bottom", {
 						get : function() {
-							return this.pos.y + this.colPos.y + this.height;
+							return this.pos.y + this.colPos.y + this.height +
+								Math.abs(this.rangeV.y);
 						},
 						configurable : true
 					});
