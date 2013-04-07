@@ -423,7 +423,7 @@ me.collision = (function() {
         for (var x = start.x, dx = x * gridwidth; x < end.x; x++) {
             for (var y = start.y, dy = y * gridheight; y < end.y; y++) {
                 // Opacity is based on number of objects in the cell
-                context.globalAlpha = (grid[x][y].objects.length / 64).clamp(0, 1);
+                context.globalAlpha = (grid[x][y].objects.length / 16).clamp(0, 0.9);
 
                 context.fillRect(dx, dy, gridwidth, gridheight);
                 dy += gridwidth;
