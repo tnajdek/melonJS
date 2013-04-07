@@ -694,17 +694,6 @@ var me = me || {};
 	};
 
 	/**
-	 * add a clamp fn to the Number object
-	 * @param {Number} low lower limit
-	 * @param {Number} high higher limit
-	 * @extends Number
-	 * @return {Number} clamped value
-	 */
-	Number.prototype.clamp = function(low, high) {
-		return this < low ? low : this > high ? high : +this;
-	};
-
-	/**
 	 * return a random between min, max
 	 * @param {Number} min minimum value.
 	 * @param {Number} max maximum value.
