@@ -105,8 +105,8 @@ var PlayerEntity = me.ObjectEntity.extend({
 	 */
 	// FIXME
 	onCollision : function (res, obj) {
-		this.parent();
-
+		this.parent(res, obj);
+/*
 		if (res) {
 			switch (res.obj.type) {	
 				case me.game.ENEMY_OBJECT : {
@@ -129,6 +129,7 @@ var PlayerEntity = me.ObjectEntity.extend({
 				default : break;
 			}
 		}
+*/
 	},
 	
 	/**
@@ -245,8 +246,9 @@ var PathEnemyEntity = me.ObjectEntity.extend({
 	/**
 	 * collision handle
 	 */
+	// FIXME
 	onCollision : function (res, obj) {
-		this.parent();
+		this.parent(res, obj);
 
 		// res.y >0 means touched by something on the bottom
 		// which mean at top position for this one

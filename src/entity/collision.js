@@ -124,7 +124,11 @@ me.collision = (function() {
         for (var x = 0; x < grid.length; x++) {
             for (var y = 0; y < grid[x].length; y++) {
                 while (grid[x][y].objects.length) {
-                    api.remove(grid[x][y].objects[0]);
+                    var obj = grid[x][y].objects[0];
+                    if (obj._collision)
+                        api.removeFrom(obj, x, y, x + 1, y + 1);
+                    else
+                        grid[x][y].objects.shift();
                 }
             }
         }
