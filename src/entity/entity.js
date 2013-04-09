@@ -851,6 +851,7 @@
 
 			this.computeVelocity(this.vel);
 
+			// FIXME: objects with contact points should always hit this case
 			if (~~this.vel.x === 0 && ~~this.vel.y === 0)
 				return [];
 
@@ -870,29 +871,19 @@
 
 		/**
 		 * onCollision Event function<br>
-		 * called by the game manager when the object collide with shtg<br>
-		 * by default, if the object type is Collectable, the destroy function is called
-		 * @param {me.ObjectEntity} obj the other object that hit this object
+		 * called by the game manager when the object collides with another object.<br>
+		 * by default, if the object type is Collectable, the object is removed.
+		 * @param {me.ObjectEntity} obj The second object that hit this object
+		 * @param {me.Vector2d} depth Collision depth
+		 * @return false to prevent default collision response
 		 * @protected
 		 */
-		onCollision : function(obj) {
+		onCollision : function(obj, depth) {
 			// destroy the object if collectable
 			if (this.type == me.collision.types.COLLECTABLE_OBJECT) {
 				me.game.remove(this);
-				return;
+				return false;
 			}
-
-			// Calculate a reaction vector
-			// FIXME: This is not quite right. The reactions do strange things.
-			var vel = this.vel.clone();
-			var depth = me.collision.getDepth(this, obj);
-
-			vel.normalize();
-			vel.abs();
-			vel.scale(depth);
-
-			this.vel.add(vel);
-			this.vel.floorSelf();
 		},
 
 		/** @private */

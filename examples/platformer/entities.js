@@ -104,32 +104,27 @@ var PlayerEntity = me.ObjectEntity.extend({
 	 * collision handle
 	 */
 	// FIXME
-	onCollision : function (res, obj) {
-		this.parent(res, obj);
-/*
-		if (res) {
-			switch (res.obj.type) {	
-				case me.game.ENEMY_OBJECT : {
-					if ((res.y>0) && this.falling) {
-						// jump
-						this.vel.y -= this.maxVel.y * me.timer.tick;
-					} else {
-						this.hurt();
-					}
-					break;
-				}
-				
-				case "spikeObject" :{
-					// jump & die
+	onCollision : function (obj, depth) {
+		switch (obj.type) {
+			case me.collision.types.ENEMY_OBJECT : {
+				if ((depth.y < 0) && this.falling) {
+					// jump
 					this.vel.y -= this.maxVel.y * me.timer.tick;
+				} else {
 					this.hurt();
-					break;
 				}
-
-				default : break;
+				break;
 			}
+
+			case "spikeObject" :{
+				// jump & die
+				this.vel.y -= this.maxVel.y * me.timer.tick;
+				this.hurt();
+				break;
+			}
+
+			default : break;
 		}
-*/
 	},
 	
 	/**
@@ -176,7 +171,7 @@ var CoinEntity = me.CollectableEntity.extend({
 		me.game.HUD.updateItemValue("score", 250);
 
 		//avoid further collision and delete it
-		this.collidable = false;
+		this.collisionMask = 0;
 		me.game.remove(this);
 	}
 	
@@ -209,7 +204,7 @@ var PathEnemyEntity = me.ObjectEntity.extend({
 		
 		// make it collidable
 		this.collidable = true;
-		this.type = me.game.ENEMY_OBJECT;
+		this.type = me.collision.types.ENEMY_OBJECT;
 	},
 		
 	
@@ -246,17 +241,14 @@ var PathEnemyEntity = me.ObjectEntity.extend({
 	/**
 	 * collision handle
 	 */
-	// FIXME
-	onCollision : function (res, obj) {
-		this.parent(res, obj);
-
-		// res.y >0 means touched by something on the bottom
+	onCollision : function (obj, depth) {
+		// depth.y < 0 means touched by something on the bottom
 		// which mean at top position for this one
-		if (res && this.alive && (res.y > 0) && obj.falling) {
+		if (this.alive && depth.y < 0 && obj.falling) {
 			// make it dead
 			this.alive = false;
 			// and not collidable anymore
-			this.collidable = false;
+			this.collisionMask = 0;
 			// set dead animation
 			this.renderable.setCurrentAnimation("dead");
 			// make it flicker and call destroy once timer finished
@@ -267,6 +259,7 @@ var PathEnemyEntity = me.ObjectEntity.extend({
 			// give some score
 			me.game.HUD.updateItemValue("score", 150);
 		}
+		return false;
 	}
 
 });

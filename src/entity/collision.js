@@ -359,7 +359,7 @@ me.collision = (function() {
     api.check = function (objA) {
 
         /* Narrow phase */
-        var result = {};
+        var result = [];
 
         // Iterate each collision cell
         for (var i = 0; i < objA._collision.cells.length; i++) {
@@ -368,10 +368,15 @@ me.collision = (function() {
             for (var j = 0; j < objects.length; j++) {
                 var objB = objects[j];
 
-                // Skip this object and previously handled objects
-                if (result[objB] || objA === objB ||
+                // FIXME: Also skip objects that have already collided in a
+                // previous call to me.collision.check()
+
+                // Skip this object
+                if (objA === objB ||
                     // And masked objects
                     (objA.collisionMask & objB.collisionMask) === 0 ||
+                    // And previously handled objects
+                    result.indexOf(objB) >= 0 ||
                     // And objects that fail the AABB test
                     !objA._collision.range.overlaps(objB._collision.range)) {
 
@@ -379,10 +384,16 @@ me.collision = (function() {
                 }
 
                 // Record collision
-                result[objB] = true;
+                result.push(objB);
 
                 // Notify objA of collision with objB
-                objA.onCollision(objB);
+                var depth = api.calcResponse(objA, objB);
+                if (objA.onCollision(objB, depth) !== false)
+                    objA.vel.add(depth); // Apply response
+
+                // Notify objB of collision with objA
+                if (objB.onCollision && objB.onCollision(objA, depth) !== false)
+                    objB.vel.add(depth); // Apply response
             }
         }
 
@@ -401,13 +412,15 @@ me.collision = (function() {
     };
 
     /**
-     * Returns the penetration depth between two colliding objects<br>
-     * @name me.collision#getDepth
-     * @protected
+     * Calculate the collision response colliding objects<br>
+     * @name me.collision#calcResponse
+     * @private
      * @function
+     * @param {me.Rect} objA First object
+     * @param {me.Rect} objA Second object
      * @return {me.Vector2d} A vector describing how the objects collide
      * @example
-     * var depth = me.collision.getDepth(this, obj);
+     * var depth = me.collision.calcResponse(objA, objB, objA.vel);
      * if (Math.abs(depth.x) > Math.abs(depth.y)) {
      *     if (depth.x < 0) {
      *         // Collision at the left
@@ -423,16 +436,55 @@ me.collision = (function() {
      *     // Collision at the bottom
      * }
      */
-    api.getDepth = function (objA, objB) {
+    api.calcResponse = function (objA, objB) {
         // TODO: Check with different-sized objects
-        return new me.Vector2d(
-            (objA.left < objB.left) ?
-                (objB.left - (objA.right + objA.vel.x)) : // Moving right
-                (objB.right - (objA.left + objA.vel.x)),  // Moving left
-            (objA.top < objB.top) ?
-                (objB.top - (objA.bottom + objA.vel.y)) : // Moving down
-                (objB.bottom - (objA.top + objA.vel.y))   // Moving up
-        );
+
+        // FIXME: Don't modify the velocity here!
+        // I need to modify it in order to get an accurate penetration depth.
+        // But I also need to get the penetration depth to be passed into the
+        // onCollision handler.
+        // The onCollision handler may return false to PREVENT ALL
+        // COLLISION RESPONSE!
+
+        // Simple AABB bounds checking
+        var colBox = objA.collisionBox;
+        if ((~~colBox.bottom === ~~objB.top && objA.vel.y > 0) ||
+            (~~colBox.top === ~~objB.bottom && objA.vel.y < 0)) {
+
+            // FIXME: Causes false positives when jumping against a wall
+
+            // Reset falling flag
+            if (objA.vel.y > 0)
+                objA.falling = false;
+
+            objA.vel.y = 0;
+        }
+        else if (
+            (~~colBox.right === ~~objB.left && objA.vel.x > 0) ||
+            (~~colBox.left === ~~objB.right && objA.vel.x < 0)) {
+
+            objA.vel.x = 0;
+        }
+
+        // If objA has stopped moving, we're done!
+        if (objA.vel.x === 0 && objA.vel.y === 0)
+            return objA.vel;
+
+        // Get AABB penetration depth
+        var range = objA._collision.range;
+        var x = (objA.vel.x < 0) ?
+            (objB.right - range.left) : // Moving left
+            (objB.left - range.right);  // Moving right
+
+        var y = (objA.vel.y < 0) ?
+            (objB.bottom - range.top) : // Moving up
+            (objB.top - range.bottom);  // Moving down
+
+        // Use the minimum distance (toward zero)
+        x = Math.abs(x) < Math.abs(objA.vel.x) ? x : 0;
+        y = Math.abs(y) < Math.abs(objA.vel.y) ? y : 0;
+
+        return new me.Vector2d(x, y);
     };
 
     /**
