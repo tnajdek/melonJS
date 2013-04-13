@@ -307,7 +307,12 @@
 			audioFormat = audioFormat.split(',');
 			// detect the prefered audio format
 			activeAudioExt = getSupportedAudioFormat(audioFormat);
-			
+
+			// Disable audio on Mobile devices for now. (ARGH!)
+			if (me.sys.isMobile && !navigator.isCocoonJS) {
+				sound_enable = false;
+			}
+
 			// enable/disable sound
 			obj.play = obj.isAudioEnable() ? _play_audio_enable : _play_audio_disable;
 
@@ -377,8 +382,7 @@
 				return 0;
 
 			// check for specific platform
-			var isMobile = me.sys.ua.match(/Android|iPhone|iPad|iPod/i);
-			if (isMobile && !navigator.isCocoonJS) {
+			if (me.sys.isMobile && !navigator.isCocoonJS) {
 				if (sync_loading) {
 					sync_loader.push([ sound, onload_cb, onerror_cb ]);
 					return;
@@ -389,7 +393,7 @@
 			var channels = sound.channel || 1;
 			var eventname = "canplaythrough";
 
-			if (sound.stream === true && !isMobile) {
+			if (sound.stream === true && !me.sys.isMobile) {
 				channels = 1;
 				eventname = "canplay";
 			}
@@ -515,8 +519,8 @@
 		 * @param {Number} volume Float specifying volume (0.0 - 1.0 values accepted).
 		 */
 		obj.setVolume = function(volume) {
-			if (volume) {
-				settings.volume = parseFloat(volume).clamp(0.0,1.0);
+			if (typeof(volume) === "number") {
+				settings.volume = volume.clamp(0.0,1.0);
 			}
 		};
 

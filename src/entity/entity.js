@@ -216,7 +216,7 @@
 			}
 
 			if (name) {
-				console.error("Cannot instantiate entity of type '" + name + "': Class not found!");
+				console.error("Cannot instantiate entity of type '" + data + "': Class not found!");
 			}
 			return null;
 		};
