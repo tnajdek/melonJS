@@ -12,11 +12,11 @@
 
 	/**
 	 * a TMX Map Reader
-	 * Tile QT 0.7.x format
+	 * Tiled QT 0.7.x format
 	 * @class
 	 * @memberOf me
 	 * @constructor
-	 * @private
+	 * @ignore
 	 */
 	me.TMXMapReader = Object.extend({
 		
@@ -70,7 +70,7 @@
 		 * set a compatible renderer object
 		 * for the specified map
 		 * TODO : put this somewhere else
-		 * @private
+		 * @ignore
 		 */
 		getNewDefaultRenderer: function (obj) {
 			switch (obj.orientation) {
@@ -92,7 +92,7 @@
 		
 		/**
 		 * Set tiled layer Data
-		 * @private
+		 * @ignore
 		 */
 		setLayerData : function(layer, data, encoding, compression) {
 			// initialize the layer data array
@@ -220,11 +220,11 @@
 	
 	/**
 	 * a XML Map Reader
-	 * Tile QT 0.7.x format
+	 * Tiled QT 0.7.x format
 	 * @class
 	 * @memberOf me
 	 * @constructor
-	 * @private
+	 * @ignore
 	 */
 	var XMLMapReader = me.TMXMapReader.extend({
 		
@@ -238,7 +238,7 @@
 		
 		/**
 		 * initialize a map using XML data
-		 * @private
+		 * @ignore
 		 */
 		readXMLMap : function(map, data) {
 			if (!data) {
@@ -422,11 +422,11 @@
 	
 	/**
 	 * a JSON Map Reader
-	 * Tile QT 0.7.x format
+	 * Tiled QT 0.7.x format
 	 * @class
 	 * @memberOf me
 	 * @constructor
-	 * @private
+	 * @ignore
 	 */
 	var JSONMapReader = me.TMXMapReader.extend({
 		

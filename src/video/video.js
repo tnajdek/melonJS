@@ -10,9 +10,8 @@
 	/**
 	 * a Timer object to manage time function (FPS, Game Tick, Time...)<p>
 	 * There is no constructor function for me.timer
-	 * @final
+	 * @namespace me.timer
 	 * @memberOf me
-	 * @constructor Should not be called by the user.
 	 */
 	me.timer = (function() {
 		// hold public stuff in our api
@@ -40,7 +39,7 @@
 
 		/**
 		 * draw the fps counter
-		 * @private
+		 * @ignore
 		 */
 		function draw(fps) {
 			htmlCounter.replaceChild(document.createTextNode("(" + fps + "/"
@@ -58,7 +57,8 @@
 		 * last game tick value
 		 * @public
 		 * @type Int
-		 * @name me.timer#tick
+		 * @name tick
+		 * @memberOf me.timer
 		 */
 		api.tick = 1.0;
 
@@ -66,15 +66,15 @@
 		 * last measured fps rate
 		 * @public
 		 * @type Int
-		 * @name me.timer#fps
+		 * @name fps
+		 * @memberOf me.timer
 		 */
 		api.fps = 0;
 		
-		/* ---
-		
-			init our time stuff
-			
-			---							*/
+		/**
+		 * init the timer
+		 * @ignore
+		 */
 		api.init = function() {
 			// check if we have a fps counter display in the HTML
 			htmlCounter = document.getElementById("framecounter");
@@ -88,8 +88,9 @@
 
 		/**
 		 * reset time (e.g. usefull in case of pause)
-		 * @name me.timer#reset
-		 * @private
+		 * @name reset
+		 * @memberOf me.timer
+		 * @ignore
 		 * @function
 		 */
 		api.reset = function() {
@@ -103,7 +104,8 @@
 
 		/**
 		 * return the current time
-		 * @name me.timer#getTime
+		 * @name getTime
+		 * @memberOf me.timer
 		 * @return {Date}
 		 * @function
 		 */
@@ -111,12 +113,11 @@
 			return now;
 		};
 
-		/* ---
-		
-			update game tick
-			should be called once a frame
-			
-			---                           */
+		/**
+		 * update game tick
+		 * should be called once a frame
+		 * @ignore
+		 */
 		api.update = function() {
 			last = now;
 			now = Date.now();
@@ -150,9 +151,8 @@
 	/**
 	 * video functions
 	 * There is no constructor function for me.video
-	 * @final
+	 * @namespace me.video
 	 * @memberOf me
-	 * @constructor Should not be called by the user.
 	 */
 	me.video = (function() {
 		// hold public stuff in our apig
@@ -175,7 +175,7 @@
 		
 		/**
 		 * return a vendor specific canvas type
-		 * @private
+		 * @ignore
 		 */
 		function getCanvasType() {
 			// cocoonJS specific canvas extension
@@ -197,7 +197,8 @@
 		/**
 		 * init the "video" part<p>
 		 * return false if initialization failed (canvas not supported)
-		 * @name me.video#init
+		 * @name init
+		 * @memberOf me.video
 		 * @function
 		 * @param {String} wrapper the "div" element id to hold the canvas in the HTML file  (if null document.body will be used)
 		 * @param {Int} width game width
@@ -263,11 +264,21 @@
 				
 			// get the 2D context
 			context2D = canvas.getContext('2d');
+			if (!context2D.canvas) {
+				context2D.canvas = canvas;
+			}
+			// set scaling interpolation filter
+			me.video.setImageSmoothing(context2D, me.sys.scalingInterpolation);
 
 			// create the back buffer if we use double buffering
 			if (double_buffering) {
 				backBufferCanvas = api.createCanvas(game_width, game_height, false);
 				backBufferContext2D = backBufferCanvas.getContext('2d');
+				if (!backBufferContext2D.canvas) {
+					backBufferContext2D.canvas = backBufferCanvas;
+				}
+				// set scaling interpolation filter
+				me.video.setImageSmoothing(backBufferContext2D, me.sys.scalingInterpolation);
 			} else {
 				backBufferCanvas = canvas;
 				backBufferContext2D = context2D;
@@ -283,7 +294,8 @@
 
 		/**
 		 * return a reference to the wrapper
-		 * @name me.video#getWrapper
+		 * @name getWrapper
+		 * @memberOf me.video
 		 * @function
 		 * @return {Document}
 		 */
@@ -293,7 +305,8 @@
 
 		/**
 		 * return the width of the display canvas (before scaling)
-		 * @name me.video#getWidth
+		 * @name getWidth
+		 * @memberOf me.video
 		 * @function
 		 * @return {Int}
 		 */
@@ -304,24 +317,21 @@
 		
 		/**
 		 * return the relative (to the page) position of the specified Canvas
-		 * @name me.video#getPos
+		 * @name getPos
+		 * @memberOf me.video
 		 * @function
 		 * @param {Canvas} [canvas] system one if none specified
 		 * @return {me.Vector2d}
 		 */
 		api.getPos = function(c) {
-			var obj = c || canvas;
-			var offset = new me.Vector2d(obj.offsetLeft, obj.offsetTop);
-			while ( obj = obj.offsetParent ) {
-				offset.x += obj.offsetLeft;
-				offset.y += obj.offsetTop;
-			} 
-			return offset;
+			var c = c || canvas;
+			return c.getBoundingClientRect?c.getBoundingClientRect():{left:0,top:0};
 		};
 
 		/**
 		 * return the height of the display canvas (before scaling)
-		 * @name me.video#getHeight
+		 * @name getHeight
+		 * @memberOf me.video
 		 * @function
 		 * @return {Int}
 		 */
@@ -331,7 +341,8 @@
 
 		/**
 		 * Create and return a new Canvas
-		 * @name me.video#createCanvas
+		 * @name createCanvas
+		 * @memberOf me.video
 		 * @function
 		 * @param {Int} width width
 		 * @param {Int} height height
@@ -353,7 +364,8 @@
 
 		/**
 		 * Create and return a new 2D Context
-		 * @name me.video#createCanvasSurface
+		 * @name createCanvasSurface
+		 * @memberOf me.video
 		 * @function
 		 * @deprecated
 		 * @param {Int} width width
@@ -361,7 +373,13 @@
 		 * @return {Context2D}
 		 */
 		api.createCanvasSurface = function(width, height) {
-			return api.createCanvas(width, height, false).getContext('2d');
+			var _canvas = api.createCanvas(width, height, false);
+			var _context = _canvas.getContext('2d');
+			if (!_context.canvas) {
+				_context.canvas = _canvas;
+			}
+			me.video.setImageSmoothing(_context, me.sys.scalingInterpolation);
+			return _context;
 		};
 
 		/**
@@ -370,7 +388,8 @@
 		 * use this when checking for display size, event <br>
 		 * or if you need to apply any special "effect" to <br>
 		 * the corresponding context (ie. imageSmoothingEnabled)
-		 * @name me.video#getScreenCanvas
+		 * @name getScreenCanvas
+		 * @memberOf me.video
 		 * @function
 		 * @return {Canvas}
 		 */
@@ -381,7 +400,8 @@
 		/**
 		 * return a reference to the screen canvas corresponding 2d Context<br>
 		 * (will return buffered context if double buffering is enabled, or a reference to the Screen Context)
-		 * @name me.video#getScreenContext
+		 * @name getScreenContext
+		 * @memberOf me.video
 		 * @function
 		 * @return {Context2D}
 		 */
@@ -391,7 +411,8 @@
 		
 		/**
 		 * return a reference to the system canvas
-		 * @name me.video#getSystemCanvas
+		 * @name getSystemCanvas
+		 * @memberOf me.video
 		 * @function
 		 * @return {Canvas}
 		 */
@@ -401,7 +422,8 @@
 		
 		/**
 		 * return a reference to the system 2d Context
-		 * @name me.video#getSystemContext
+		 * @name getSystemContext
+		 * @memberOf me.video
 		 * @function
 		 * @return {Context2D}
 		 */
@@ -411,7 +433,7 @@
 		
 		/**
 		 * callback for window resize event
-		 * @private
+		 * @ignore
 		 */
 		api.onresize = function(event){
 			if (auto_scale) {
@@ -446,15 +468,16 @@
 				return;
 			}
 			// make sure we have the correct relative canvas position cached
-			me.input.mouse.offset = me.video.getPos();
+			me.input.offset = me.video.getPos();
 		};
 		
 		/**
 		 * Modify the "displayed" canvas size
-		 * @name me.video#updateDisplaySize
+		 * @name updateDisplaySize
+		 * @memberOf me.video
 		 * @function
-		 * @param {Number} scale X scaling value
-		 * @param {Number} scale Y scaling value
+		 * @param {Number} scaleX X scaling multiplier
+		 * @param {Number} scaleY Y scaling multiplier
 		 */
 		api.updateDisplaySize = function(scaleX, scaleY) {
 			// update the global scale variable
@@ -464,7 +487,7 @@
 			canvas.height = game_height_zoom = backBufferCanvas.height * scaleY;
 			
 			// make sure we have the correct relative canvas position cached
-			me.input.mouse.offset = me.video.getPos();
+			me.input.offset = me.video.getPos();
 
 			// force a canvas repaint
 			api.blitSurface();
@@ -475,26 +498,34 @@
 		
 		/**
 		 * Clear the specified context with the given color
-		 * @name me.video#clearSurface
+		 * @name clearSurface
+		 * @memberOf me.video
 		 * @function
-		 * @param {Context2D} context
-		 * @param {Color} col
+		 * @param {Context2D} context Canvas context
+		 * @param {String} color a CSS color string
 		 */
 		api.clearSurface = function(context, col) {
+			var w = context.canvas.width;
+			var h = context.canvas.height;
+
 			context.save();
 			context.setTransform(1, 0, 0, 1, 0, 0);
+			if (col.substr(0, 4) === "rgba") {
+				context.clearRect(0, 0, w, h);
+			}
 			context.fillStyle = col;
-			context.fillRect(0, 0, api.getWidth(),api.getHeight());
+			context.fillRect(0, 0, w, h);
 			context.restore();
 		};
 
 		/**
 		 * scale & keep canvas centered<p>
-		 * usefull for zooming effect
-		 * @name me.video#scale
+		 * useful for zooming effect
+		 * @name scale
+		 * @memberOf me.video
 		 * @function
-		 * @param {Context2D} context
-		 * @param {scale} scale
+		 * @param {Context2D} context Canvas context
+		 * @param {Number} scale Scaling multiplier
 		 */
 		api.scale = function(context, scale) {
 			context.translate(
@@ -505,34 +536,30 @@
 		};
 		
 		/**
-		 * enable/disable image smoothing <br>
+		 * enable/disable image smoothing (scaling interpolation) for the specified 2d Context<br>
 		 * (!) this might not be supported by all browsers <br>
-		 * default : enabled
-		 * @name me.video#setImageSmoothing
+		 * @name setImageSmoothing
+		 * @memberOf me.video
 		 * @function
-		 * @param {Boolean} enable
+		 * @param {Context2D} context
+		 * @param {Boolean} [enable=false]
 		 */
-		api.setImageSmoothing = function(enable) {
+		api.setImageSmoothing = function(context, enable) {
 			// a quick polyfill for the `imageSmoothingEnabled` property
 			var vendors = ['ms', 'moz', 'webkit', 'o'];
 			for(var x = 0; x < vendors.length; ++x) {
-				if (context2D[vendors[x]+'ImageSmoothingEnabled'] !== undefined) {
-					context2D[vendors[x]+'ImageSmoothingEnabled'] = enable;
-					if (double_buffering) {
-						backBufferContext2D[vendors[x]+'ImageSmoothingEnabled'] = enable;
-					}
+				if (context[vendors[x]+'ImageSmoothingEnabled'] !== undefined) {
+					context[vendors[x]+'ImageSmoothingEnabled'] = (enable===true);
 				}
 			};
 			// generic one (if implemented)
-			context2D.imageSmoothingEnabled = enable;
-			if (double_buffering) {
-				backBufferContext2D.imageSmoothingEnabled = enable;
-			}
+			context.imageSmoothingEnabled = (enable===true);
 		};
 		
 		/**
 		 * enable/disable Alpha for the specified context
-		 * @name me.video#setAlpha
+		 * @name setAlpha
+		 * @memberOf me.video
 		 * @function
 		 * @param {Context2D} context
 		 * @param {Boolean} enable
@@ -543,12 +570,13 @@
 
 		/**
 		 * render the main framebuffer on screen
-		 * @name me.video#blitSurface
+		 * @name blitSurface
+		 * @memberOf me.video
 		 * @function
 		 */
 		api.blitSurface = function() {
 			if (double_buffering) {
-				/** @private */
+				/** @ignore */
 				api.blitSurface = function() {
 					//FPS.update();
 					context2D.drawImage(backBufferCanvas, 0, 0,
@@ -558,7 +586,7 @@
 				};
 			} else {
 				// "empty" function, as we directly render stuff on "context2D"
-				/** @private */
+				/** @ignore */
 				api.blitSurface = function() {
 				};
 			}
@@ -570,11 +598,12 @@
 		 * and return a new canvas object with the modified output<br>
 		 * (!) Due to the internal usage of getImageData to manipulate pixels,
 		 * this function will throw a Security Exception with FF if used locally
-		 * @name me.video#applyRGBFilter
+		 * @name applyRGBFilter
+		 * @memberOf me.video
 		 * @function
 		 * @param {Object} object Canvas or Image Object on which to apply the filter
 		 * @param {String} effect "b&w", "brightness", "transparent"
-		 * @param {String} option : level [0...1] (for brightness), color to be replaced (for transparent) 
+		 * @param {String} option For "brightness" effect : level [0...1] <br> For "transparent" effect : color to be replaced in "#RRGGBB" format
 		 * @return {Context2D} context object
 		 */
 		api.applyRGBFilter = function(object, effect, option) {

@@ -10,7 +10,7 @@
 	/**
 	 * a default loading screen
 	 * @memberOf me
-	 * @private
+	 * @ignore
 	 * @constructor
 	 */
 	me.DefaultLoadingScreen = me.ScreenObject.extend({
@@ -115,9 +115,8 @@
 	/**
 	 * a small class to manage loading of stuff and manage resources
 	 * There is no constructor function for me.input.
-	 * @final
+	 * @namespace me.loader
 	 * @memberOf me
-	 * @constructor Should not be called by the user.
 	 */
 
 	me.loader = (function() {
@@ -132,6 +131,8 @@
 		var binList = {};
 		// contains all the texture atlas files
 		var atlasList = {};
+		// contains all the JSON files
+		var jsonList = {};
 		// flag to check loading status
 		var resourceCount = 0;
 		var loadCount = 0;
@@ -139,7 +140,7 @@
 
 		/**
 		 * check the loading status
-		 * @private
+		 * @ignore
 		 */
 		function checkLoadStatus() {
 			if (loadCount == resourceCount) {
@@ -169,7 +170,7 @@
 		 * 				  {name: 'image2', src: 'images/image2.png'},
 		 *				  {name: 'image3', src: 'images/image3.png'},
 		 *				  {name: 'image4', src: 'images/image4.png'}]);
-		 * @private
+		 * @ignore
 		 */
 		
 		function preloadImage(img, onload, onerror) {
@@ -182,7 +183,7 @@
 
 		/**
 		 * preload TMX files
-		 * @private
+		 * @ignore
 		 */
 		function preloadTMX(tmxData, onload, onerror) {
 			var xmlhttp = new XMLHttpRequest();
@@ -198,7 +199,12 @@
 			}
 			
 			xmlhttp.open("GET", tmxData.src + me.nocache, true);
-						
+
+			// add the tmx to the levelDirector
+			if (tmxData.type === "tmx") {
+				me.levelDirector.addTMXLevel(tmxData.name);
+			}
+
 			// set the callbacks
 			xmlhttp.ontimeout = onerror;
 			xmlhttp.onreadystatechange = function() {
@@ -240,10 +246,6 @@
 							format : format
 						};
 						
-						// add the tmx to the levelDirector
-						if (tmxData.type === "tmx") {
-							me.levelDirector.addTMXLevel(tmxData.name);
-						}
 						// fire the callback
 						onload();
 					} else {
@@ -258,7 +260,7 @@
 		
 		/**
 		 * preload TMX files
-		 * @private
+		 * @ignore
 		 */
 		function preloadJSON(data, onload, onerror) {
 			var xmlhttp = new XMLHttpRequest();
@@ -277,7 +279,7 @@
 					// (With Chrome use "--allow-file-access-from-files --disable-web-security")
 					if ((xmlhttp.status==200) || ((xmlhttp.status==0) && xmlhttp.responseText)){
 						// get the Texture Packer Atlas content
-						atlasList[data.name] = JSON.parse(xmlhttp.responseText);
+						jsonList[data.name] = JSON.parse(xmlhttp.responseText);
 						// fire the callback
 						onload();
 					} else {
@@ -291,7 +293,7 @@
 			
 		/**
 		 * preload Binary files
-		 * @private
+		 * @ignore
 		 */
 		function preloadBinary(data, onload, onerror) {
 			var httpReq = new XMLHttpRequest();
@@ -327,8 +329,9 @@
 		/**
 		 * onload callback
 		 * @public
-		 * @type Function
-		 * @name me.loader#onload
+		 * @callback
+		 * @name onload
+		 * @memberOf me.loader
 		 * @example
 		 *
 		 * // set a callback when everything is loaded
@@ -341,8 +344,9 @@
 		 * each time a resource is loaded, the loader will fire the specified function,
 		 * giving the actual progress [0 ... 1], as argument.
 		 * @public
-		 * @type Function
-		 * @name me.loader#onProgress
+		 * @callback
+		 * @name onProgress
+		 * @memberOf me.loader
 		 * @example
 		 *
 		 * // set a callback for progress notification
@@ -352,7 +356,7 @@
 
 		/**
 		 *	just increment the number of already loaded resources
-		 * @private
+		 * @ignore
 		 */
 
 		obj.onResourceLoaded = function(e) {
@@ -371,7 +375,7 @@
 		
 		/**
 		 * on error callback for image loading 	
-		 * @private
+		 * @ignore
 		 */
 		obj.onLoadingError = function(res) {
 			throw "melonJS: Failed loading resource " + res.src;
@@ -389,7 +393,8 @@
 		 * - channel : optional number of channels to be created<br>
 		 * - stream  : optional boolean to enable audio streaming<br>
 		 * <br>
-		 * @name me.loader#preload
+		 * @name preload
+		 * @memberOf me.loader
 		 * @public
 		 * @function
 		 * @param {Array.<string>} resources
@@ -409,8 +414,8 @@
 		 *   {name: "cling",   type: "audio",  src: "data/audio/",  channel: 2},
 		 *   // binary file
 		 *   {name: "ymTrack", type: "binary", src: "data/audio/main.ym"},
-		 *   // texturePacker
-		 *   {name: "texture", type: "tps", src: "data/gfx/texture.json"}
+		 *   // JSON file (used for texturePacker) 
+		 *   {name: "texture", type: "json", src: "data/gfx/texture.json"}
 		 * ];
 		 * ...
 		 *
@@ -430,13 +435,14 @@
 		 * Load a single resource (to be used if you need to load additional resource during the game)<br>
 		 * Given parmeter must contain the following fields :<br>
 		 * - name    : internal name of the resource<br>
-		 * - type    : "binary", "image", "tmx", "tsx", "audio", "tps"
+		 * - type    : "audio", binary", "image", "json", "tmx", "tsx"
 		 * - src     : path and file name of the resource<br>
 		 * (!) for audio :<br>
 		 * - src     : path (only) where resources are located<br>
 		 * - channel : optional number of channels to be created<br>
 		 * - stream  : optional boolean to enable audio streaming<br>
-		 * @name me.loader#load
+		 * @name load
+		 * @memberOf me.loader
 		 * @public
 		 * @function
 		 * @param {Object} resource
@@ -471,8 +477,8 @@
 					// reuse the preloadImage fn
 					preloadImage.call(this, res, onload, onerror);
 					return 1;
-				
-				case "tps":
+
+				case "json":
 					preloadJSON.call(this, res, onload, onerror);
 					return 1;
 
@@ -498,7 +504,8 @@
 
 		/**
 		 * unload specified resource to free memory
-		 * @name me.loader#unload
+		 * @name unload
+		 * @memberOf me.loader
 		 * @public
 		 * @function
 		 * @param {Object} resource
@@ -522,11 +529,11 @@
 					delete imgList[res.name];
 					return true;
 
-				case "tps":
-					if (!(res.name in atlasList))
+				case "json":
+					if(!(res.name in jsonList))
 						return false;
 
-					delete atlasList[res.name];
+					delete jsonList[res.name];
 					return true;
 					
 				case "tmx":
@@ -547,7 +554,8 @@
 
 		/**
 		 * unload all resources to free memory
-		 * @name me.loader#unloadAll
+		 * @name unloadAll
+		 * @memberOf me.loader
 		 * @public
 		 * @function
 		 * @example me.loader.unloadAll();
@@ -566,6 +574,14 @@
 			// unload all tmx resources
 			for (name in tmxList)
 				obj.unload(name);
+			
+			// unload all atlas resources
+			for (name in atlasList)
+				obj.unload(name);
+
+			// unload all in json resources
+			for (name in jsonList)
+				obj.unload(name);
 
 			// unload all audio resources
 			me.audio.unloadAll();
@@ -573,7 +589,8 @@
 
 		/**
 		 * return the specified TMX object storing type
-		 * @name me.loader#getTMXFormat
+		 * @name getTMXFormat
+		 * @memberOf me.loader
 		 * @public
 		 * @function
 		 * @param {String} tmx name of the tmx/tsx element ("map1");
@@ -593,7 +610,8 @@
 
 		/**
 		 * return the specified TMX/TSX object
-		 * @name me.loader#getTMX
+		 * @name getTMX
+		 * @memberOf me.loader
 		 * @public
 		 * @function
 		 * @param {String} tmx name of the tmx/tsx element ("map1");
@@ -612,7 +630,8 @@
 		
 		/**
 		 * return the specified Binary object
-		 * @name me.loader#getBinary
+		 * @name getBinary
+		 * @memberOf me.loader
 		 * @public
 		 * @function
 		 * @param {String} name of the binary object ("ymTrack");
@@ -629,30 +648,12 @@
 			}
 
 		};
-		
-		/**
-		 * return the specified Atlas object
-		 * @name me.loader#getAtlas
-		 * @public
-		 * @function
-		 * @param {String} name of the atlas object;
-		 * @return {Object} 
-		 */
-		obj.getAtlas = function(elt) {
-			// avoid case issue
-			elt = elt.toLowerCase();
-			if (elt in atlasList)
-				return atlasList[elt];
-			else {
-				//console.log ("warning %s resource not yet loaded!",name);
-				return null;
-			}
-		};
 
 
 		/**
 		 * return the specified Image Object
-		 * @name me.loader#getImage
+		 * @name getImage
+		 * @memberOf me.loader
 		 * @public
 		 * @function
 		 * @param {String} Image name of the Image element ("tileset-platformer");
@@ -683,8 +684,28 @@
 		};
 
 		/**
+		 * return the specified JSON Object
+		 * @name getJSON
+		 * @memberOf me.loader
+		 * @public
+		 * @function
+		 * @param {String} Name for the json file to load
+		 * @return {Object} 
+		 */
+		obj.getJSON = function(elt) {
+			elt = elt.toLowerCase();
+			if(elt in jsonList) {
+				return jsonList[elt];
+			}
+			else {
+				return null;
+			}
+		}
+
+		/**
 		 * Return the loading progress in percent
-		 * @name me.loader#getLoadProgress
+		 * @name getLoadProgress
+		 * @memberOf me.loader
 		 * @public
 		 * @function
 		 * @deprecated use callback instead

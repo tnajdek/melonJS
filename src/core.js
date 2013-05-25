@@ -1,6 +1,6 @@
 /**
  * @license MelonJS Game Engine
- * Copyright (C) 2011 - 2013, Olivier BIOT
+ * @copyright (C) 2011 - 2013 Olivier Biot, Jason Oster
  * http://www.melonjs.org
  *
  * melonJS is licensed under the MIT License.
@@ -13,7 +13,7 @@
  * You generally should not add new properties to this namespace as it may be overwritten in future versions.
  * @namespace
  */
-var me = me || {};
+window.me = window.me || {};
 
 (function($) {
 	// Use the correct document accordingly to window argument
@@ -21,7 +21,7 @@ var me = me || {};
 
 	/**
 	 * me global references
-	 * @namespace
+	 * @ignore
 	 */
 	me = {
 		// settings & configuration
@@ -70,7 +70,7 @@ var me = me || {};
 		 * @type Boolean
 		 * @memberOf me.sys
 		 */
-		localStorage : (typeof($.localStorage) == 'object'),
+		localStorage : (typeof($.localStorage) === 'object'),
 		/**
 		 * Browser Gyroscopic Motion Event capabilities (read-only) <br>
 		 * @type Boolean
@@ -83,7 +83,7 @@ var me = me || {};
 		 * @type Boolean
 		 * @memberOf me.sys
 		 */
-		nativeBase64 : (typeof($.atob) == 'function'),
+		nativeBase64 : (typeof($.atob) === 'function'),
 
 		/**
 		 * Touch capabilities <br>
@@ -122,7 +122,14 @@ var me = me || {};
 		 * @memberOf me.sys
 		 */
 		scale : null, //initialized by me.video.init
- 	
+		
+		/**
+		 * enable/disable video scaling interpolation (default disable)<br>
+		 * @type Boolean
+		 * @memberOf me.sys
+		 */
+		scalingInterpolation : false,
+	
 		/**
 		 * Global gravity settings <br>
 		 * will override entities init value if defined<br>
@@ -131,14 +138,6 @@ var me = me || {};
 		 * @memberOf me.sys
 		 */
 		gravity : undefined,
-
-		/**
-		 * Use native "requestAnimFrame" function if supported <br>
-		 * fallback to clearInterval if not supported by the browser<br>
-		 * @type Boolean
-		 * @memberOf me.sys
-		 */
-		useNativeAnimFrame : false,
 
 		/**
 		 * cache Image using a Canvas element, instead of directly using the Image Object<br>
@@ -187,6 +186,7 @@ var me = me || {};
 		 * @memberOf me.sys
 		 */
 		preRender : false,
+		
 
 		/**
 		 * Default width of collision grid cells<br>
@@ -257,11 +257,12 @@ var me = me || {};
 			}
 
 			// clean up loading event
-			if (document.removeEventListener)
+			if (document.removeEventListener) {
 				document.removeEventListener("DOMContentLoaded", domReady, false);
-			else
+			} else {
 				$.removeEventListener("load", domReady, false);
-
+			}
+			
 			// Remember that the DOM is ready
 			isReady = true;
 
@@ -272,7 +273,6 @@ var me = me || {};
 			readyList.length = 0;
 		}
 	}
-	;
 
 	// bind ready
 	function bindReady() {
@@ -292,7 +292,7 @@ var me = me || {};
 			// A fallback to window.onload, that will always work
 			$.addEventListener("load", domReady, false);
 		}
-	};
+	}
 
 	/**
 	 * Specify a function to execute when the DOM is fully loaded
@@ -366,14 +366,11 @@ var me = me || {};
 
 	/************************************************************************************/
 
-	/*---
+	/*
+	 * some "Javascript API" patch & enhancement
+	 */
 
-	 	some "Javascript API" patch & enhancement
-
-						---*/
-
-	var initializing = false,
-		fnTest = /xyz/.test(function() {/**@nosideeffects*/xyz;}) ? /\bparent\b/ : /.*/;
+	var initializing = false, fnTest = /var xyz/.test(function() {/**@nosideeffects*/var xyz;}) ? /\bparent\b/ : /[\D|\d]*/;
 
 	/**
 	 * JavaScript Inheritance Helper <br>
@@ -437,8 +434,8 @@ var me = me || {};
 		// Copy the properties over onto the new prototype
 		for ( var name in prop) {
 			// Check if we're overwriting an existing function
-			proto[name] = typeof prop[name] == "function"
-					&& typeof parent[name] == "function"
+			proto[name] = typeof prop[name] === "function"
+					&& typeof parent[name] === "function"
 					&& fnTest.test(prop[name]) ? (function(name, fn) {
 				return function() {
 					var tmp = this.parent;
@@ -497,7 +494,7 @@ var me = me || {};
 
 	
 	if (!Function.prototype.bind) {
-		/** @private */
+		/** @ignore */
 		function Empty() {};
 		
 		/**
@@ -505,7 +502,7 @@ var me = me || {};
 		 * Whenever the resulting "bound" function is called, it will call the original ensuring that this is set to context. <p>
 		 * Also optionally curries arguments for the function.
 		 * @param {Object} context the object to bind to.
-		 * @param {Array.<string>} [args] Optional additional arguments to curry for the function.
+		 * @param {} [arguments...] Optional additional arguments to curry for the function.
 		 * @example
 		 * // Ensure that our callback is triggered with the right object context (this):
 		 * myObject.onComplete(this.callback.bind(this));
@@ -515,7 +512,7 @@ var me = me || {};
 			// http://es5.github.com/#x15.3.4.5
 			// from https://github.com/kriskowal/es5-shim
 			var target = this;
-			if (typeof target != "function") {
+			if (typeof target !== "function") {
 				throw new TypeError("Function.prototype.bind called on incompatible " + target);
 			}
 			var args = Array.prototype.slice.call(arguments, 1);
@@ -537,6 +534,40 @@ var me = me || {};
 			}
 			return bound;
 		};
+	}
+
+	if (!window.throttle) {
+		/**
+		 * a simple throttle function 
+		 * use same fct signature as the one in prototype
+		 * in case it's already defined before
+		 * @ignore
+		 */
+		window.throttle = function( delay, no_trailing, callback, debounce_mode ) {
+			var last = Date.now(), deferTimer;
+			// `no_trailing` defaults to false.
+			if ( typeof no_trailing !== 'boolean' ) {
+			  no_trailing = false;
+			}
+			return function () {
+				var now = Date.now();
+				var elasped = now - last;
+				var args = arguments;
+				if (elasped < delay) {
+					if (no_trailing === false) {
+						// hold on to it
+						clearTimeout(deferTimer);
+						deferTimer = setTimeout(function () {
+							last = now;
+							return callback.apply(null, args);
+						}, elasped);
+					}
+				} else {
+					last = now;
+					return callback.apply(null, args);
+				}
+			}
+		};
 	};
 	
 	
@@ -544,16 +575,16 @@ var me = me || {};
 		/**
 		 * provide a replacement for browser not
 		 * supporting Date.now (JS 1.5)
-		 * @private
+		 * @ignore
 		 */
-		Date.now = function(){return new Date().getTime()};
+		Date.now = function(){return new Date().getTime();};
 	}
 
 	if(typeof console === "undefined") {
 		/**
 		 * Dummy console.log to avoid crash
 		 * in case the browser does not support it
-		 * @private
+		 * @ignore
 		 */
 		console = {
 			log: function() {},
@@ -564,7 +595,7 @@ var me = me || {};
 
 	/**
 	 * Executes a function as soon as the interpreter is idle (stack empty).
-	 * @param {Args} [args] Optional additional arguments to curry for the function.
+	 * @param {} [arguments...] Optional additional arguments to curry for the function.
 	 * @return {Int} id that can be used to clear the deferred function using clearTimeout
 	 * @example
 	 *
@@ -653,7 +684,7 @@ var me = me || {};
 	 * @return {Boolean} true if string contains only digits
 	 */
 	String.prototype.isNumeric = function() {
-		return (this != null && !isNaN(this) && this.trim() != "");
+		return (this !== null && !isNaN(this) && this.trim() !== "");
 	};
 
 	/**
@@ -662,8 +693,7 @@ var me = me || {};
 	 * @return {Boolean} true if the string is either true or false
 	 */
 	String.prototype.isBoolean = function() {
-		return (this != null && ("true" == this.trim() || "false" == this
-				.trim()));
+		return (this !== null && ("true" === this.trim() || "false" === this.trim()));
 	};
 
 	/**
@@ -739,8 +769,7 @@ var me = me || {};
 	 * @return {String} converted hexadecimal value
 	 */
 	Number.prototype.toHex = function() {
-		return "0123456789ABCDEF".charAt((this - this % 16) >> 4)
-				+ "0123456789ABCDEF".charAt(this % 16);
+		return "0123456789ABCDEF".charAt((this - this % 16) >> 4) + "0123456789ABCDEF".charAt(this % 16);
 	};
 
 	/**
@@ -801,7 +830,7 @@ var me = me || {};
 		/**
 		 * provide a replacement for browsers that don't
 		 * support Array.prototype.forEach (JS 1.6)
-		 * @private
+		 * @ignore
 		 */
 		Array.prototype.forEach = function (callback, scope) {
 			for (var i = 0, j = this.length; j--; i++) {
@@ -828,14 +857,15 @@ var me = me || {};
 		}
 	});
 
-	/*---
-	 	ME init stuff
-						---*/
+	/*
+	 * me init stuff
+     */
 
 	function _init_ME() {
 		// don't do anything if already initialized (should not happen anyway)
-		if (me_initialized)
+		if (me_initialized) {
 			return;
+		}
 
 		// enable/disable the cache
 		me.utils.setNocache(document.location.href.match(/\?nocache/)||false);
@@ -843,8 +873,14 @@ var me = me || {};
 		// detect audio capabilities
 		me.audio.detectCapabilities();
 		
+		// future proofing (MS) feature detection
+		navigator.pointerEnabled = navigator.pointerEnabled || navigator.msPointerEnabled;
+		navigator.maxTouchPoints = navigator.maxTouchPoints || navigator.msMaxTouchPoints || 0;
+		window.gesture = window.gesture || window.MSGesture;
+		
 		// detect touch capabilities
-		me.sys.touch = ('createTouch' in document) || ('ontouchstart' in $) || (navigator.isCocoonJS);
+		me.sys.touch = ('createTouch' in document) || ('ontouchstart' in $) || 
+		               (navigator.isCocoonJS) || (navigator.maxTouchPoints > 0);
 		
 		// detect platform
 		me.sys.isMobile = me.sys.ua.match(/Android|iPhone|iPad|iPod|BlackBerry|Windows Phone/i);
@@ -869,7 +905,7 @@ var me = me || {};
 
 		me_initialized = true;
 
-	};
+	}
 
 	/******************************************/
 	/*		OBJECT DRAWING MANAGEMENT           */
@@ -973,7 +1009,7 @@ var me = me || {};
 		 */
 		api.remove = function(obj) {
 			var idx = dirtyObjects.indexOf(obj);
-			if (idx != -1) {
+			if (idx !== -1) {
 				// remove the object from the list of obj to draw
 				dirtyObjects.splice(idx, 1);
 
@@ -985,14 +1021,14 @@ var me = me || {};
 				api.makeDirty(obj, true);
 			}
  		};
-
+		
 		/**
 		 * return the amount of draw object per frame
 		 */
 		api.getDrawCount = function() {
 			return drawCount;
  		};
-
+		
 		/**
 		 * draw all dirty objects/regions
 		 */
@@ -1004,7 +1040,7 @@ var me = me || {};
 			// save the current context
 			context.save();
 			// translate by default to screen coordinates
-			context.translate(-posx, -posy)
+			context.translate(-posx, -posy);
 			
 			// substract the map offset to current the current pos
 			posx -= me.game.currentLevel.pos.x;
@@ -1076,10 +1112,8 @@ var me = me || {};
 	 * me.game represents your current game, it contains all the objects, tilemap layers,<br>
 	 * HUD information, current viewport, collision map, etc..<br>
 	 * me.game is also responsible for updating (each frame) the object status and draw them<br>
-	 * There is no constructor function for me.game.
-	 * @final
+	 * @namespace me.game
 	 * @memberOf me
-	 * @constructor Should not be called by the user.
 	 */
 	me.game = (function() {
 		// hold public stuff in our singletong
@@ -1107,6 +1141,7 @@ var me = me || {};
 		/**
 		 * a default sort function
 		 * @private
+		 * @ignore
 		 */
 		var default_sort_func = function(a, b) {
 			// sort order is inverted,
@@ -1123,36 +1158,42 @@ var me = me || {};
 		 * a reference to the game viewport.
 		 * @public
 		 * @type me.Viewport
-		 * @name me.game#viewport
+		 * @name viewport
+		 * @memberOf me.game
 		 */
 		api.viewport = null;
 		/**
 		 * a reference to the game HUD (if defined).
 		 * @public
 		 * @type me.HUD_Object
-		 * @name me.game#HUD
+		 * @name HUD
+		 * @memberOf me.game
 		 */
 		api.HUD = null;
 		/**
 		 * a reference to the game collision Map
 		 * @public
 		 * @type me.TMXLayer
-		 * @name me.game#collisionMap
+		 * @name collisionMap
+		 * @memberOf me.game
 		 */
 		api.collisionMap = null;
 		/**
 		 * a reference to the game current level
 		 * @public
 		 * @type me.TMXTileMap
-		 * @name me.game#currentLevel
+		 * @name currentLevel
+		 * @memberOf me.game
 		 */
 		api.currentLevel = null;
 
 		/**
 		 * default layer renderer
 		 * @private
+		 * @ignore
 		 * @type me.TMXRenderer
-		 * @name me.game#renderer
+		 * @name renderer
+		 * @memberOf me.game
 		 */		
 		api.renderer = null;
 
@@ -1162,18 +1203,21 @@ var me = me || {};
 		 * Additionnaly the level id will also be passed
 		 * to the called function.
 		 * @public
-		 * @type function
-		 * @name me.game#onLevelLoaded
+		 * @callback
+		 * @name onLevelLoaded
+		 * @memberOf me.game
 		 * @example
 		 * // call myFunction() everytime a level is loaded
 		 * me.game.onLevelLoaded = this.myFunction.bind(this);
 		 */
 		 api.onLevelLoaded = null;
-
+		 
 		/**
 		 * Initialize the game manager
-		 * @name me.game#init
+		 * @name init
+		 * @memberOf me.game
 		 * @private
+		 * @ignore
 		 * @function
 		 * @param {int} [width="full size of the created canvas"] width of the canvas
 		 * @param {int} [height="full size of the created canvas"] width of the canvas
@@ -1202,23 +1246,26 @@ var me = me || {};
 		 * reset the game Object manager<p>
 		 * destroy all current object except the HUD
 		 * @see me.game#disableHUD
-		 * @name me.game#reset
+		 * @name reset
+		 * @memberOf me.game
 		 * @public
 		 * @function
 		 */
 		api.reset = function() {
 
 			// initialized the object if not yet done
-			if (!initialized)
+			if (!initialized) {
 				api.init();
+			}
 
 			// remove all objects
 			api.removeAll(true);
 
 			// reset the viewport to zero ?
-			if (api.viewport)
+			if (api.viewport) {
 				api.viewport.reset();
-
+			}
+			
 			// also reset the draw manager
 			drawManager.reset();
 
@@ -1231,8 +1278,10 @@ var me = me || {};
 	
 		/**
 		 * Load a TMX level
-		 * @name me.game#loadTMXLevel
+		 * @name loadTMXLevel
+		 * @memberOf me.game
 		 * @private
+		 * @ignore
 		 * @function
 		 */
 
@@ -1254,7 +1303,7 @@ var me = me || {};
 					// only if visible
 					api.add(layers[i]);
 				}
-			};
+			}
 
 			// Reset collision spacial grid
 			me.collision.reset();
@@ -1275,7 +1324,7 @@ var me = me || {};
 			}
 			
 			// check if the map has different default (0,0) screen coordinates
-			if (api.currentLevel.pos.x != api.currentLevel.pos.y) {
+			if (api.currentLevel.pos.x !== api.currentLevel.pos.y) {
 				// translate the display accordingly
 				frameBuffer.translate( api.currentLevel.pos.x , api.currentLevel.pos.y );
 			}
@@ -1285,7 +1334,7 @@ var me = me || {};
 
 			// fire the callback if defined
 			if (api.onLevelLoaded) {
-				api.onLevelLoaded.call(api.onLevelLoaded, level.name)
+				api.onLevelLoaded.call(api.onLevelLoaded, level.name);
 			}
 			//publish the corresponding message
 			me.event.publish(me.event.LEVEL_LOADED, [level.name]);
@@ -1294,7 +1343,8 @@ var me = me || {};
 
 		/**
 		 * Manually add object to the game manager
-		 * @name me.game#add
+		 * @name add
+		 * @memberOf me.game
 		 * @param {me.ObjectEntity} obj Object to be added
 		 * @param {int} [z="obj.z"] z index
 		 * @public
@@ -1317,8 +1367,10 @@ var me = me || {};
 
 		/**
 		 * add an entity to the game manager
-		 * @name me.game#addEntity
+		 * @name addEntity
+		 * @memberOf me.game
 		 * @private
+		 * @ignore
 		 * @function
 		 */
 		api.addEntity = function(ent, zOrder) {
@@ -1333,7 +1385,8 @@ var me = me || {};
 		 * as defined in Tiled (Name field of the Object Properties)<br>
 		 * note : avoid calling this function every frame since
 		 * it parses the whole object list each time
-		 * @name me.game#getEntityByName
+		 * @name getEntityByName
+		 * @memberOf me.game
 		 * @public
 		 * @function
 		 * @param {String} entityName entity name
@@ -1353,8 +1406,10 @@ var me = me || {};
 
 		/**
 		 * returns the amount of existing objects<br>
-		 * @name me.game#getObjectCount
+		 * @name getObjectCount
+		 * @memberOf me.game
 		 * @protected
+ 		 * @ignore
 		 * @function
 		 * @return {Number} the amount of object
 		 */
@@ -1365,8 +1420,10 @@ var me = me || {};
 
 		/**
 		 * returns the amount of object being drawn per frame<br>
-		 * @name me.game#getDrawCount
+		 * @name getDrawCount
+		 * @memberOf me.game
 		 * @protected
+ 		 * @ignore
 		 * @function
 		 * @return {Number} the amount of object draws
 		 */
@@ -1380,7 +1437,8 @@ var me = me || {};
 		 * return the entity corresponding to the specified GUID<br>
 		 * note : avoid calling this function every frame since
 		 * it parses the whole object list each time
-		 * @name me.game#getEntityByGUID
+		 * @name getEntityByGUID
+		 * @memberOf me.game
 		 * @public
 		 * @function
 		 * @param {String} GUID entity GUID
@@ -1400,7 +1458,8 @@ var me = me || {};
 		 * return the entity corresponding to the property and value<br>
 		 * note : avoid calling this function every frame since
 		 * it parses the whole object list each time
-		 * @name me.game#getEntityByProp
+		 * @name getEntityByProp
+		 * @memberOf me.game
 		 * @public
 		 * @function
 		 * @param {String} prop Property name
@@ -1420,14 +1479,15 @@ var me = me || {};
 
 		/**
 		 * add a HUD obj to the game manager
-		 * @name me.game#addHUD
+		 * @name addHUD
+		 * @memberOf me.game
 		 * @public
 		 * @function
 		 * @param {int} x x position of the HUD
 		 * @param {int} y y position of the HUD
 		 * @param {int} w width of the HUD
 		 * @param {int} h height of the HUD
-		 * @param {String} [bg="none"] a CSS string specifying the background color (e.g. "#0000ff" or "rgb(0,0,255)")
+		 * @param {String} [bg] a CSS string specifying the background color (e.g. "#0000ff" or "rgb(0,0,255)")
 		 */
 		api.addHUD = function(x, y, w, h, bg) {
 			// if no HUD existing
@@ -1440,7 +1500,8 @@ var me = me || {};
 
 		/**
 		 * disable the current HUD
-		 * @name me.game#disableHUD
+		 * @name disableHUD
+		 * @memberOf me.game
 		 * @public
 		 * @function
 		 */
@@ -1458,8 +1519,10 @@ var me = me || {};
 
 		/**
 		 * update all objects of the game manager
-		 * @name me.game#update
+		 * @name update
+		 * @memberOf me.game
 		 * @private
+		 * @ignore
 		 * @function
 		 */
 		api.update = function() {
@@ -1477,7 +1540,7 @@ var me = me || {};
 				);
 
 				// update our object
-				var updated = obj.update();
+				var updated = (obj.inViewport || obj.alwaysUpdate) && obj.update();
 
 				// add it to the draw manager
 				drawManager.makeDirty(obj, updated, updated ? oldRect : null);
@@ -1492,11 +1555,12 @@ var me = me || {};
 		
 		/**
 		 * remove an object
-		 * @name me.game#remove
+		 * @name remove
+		 * @memberOf me.game
 		 * @public
 		 * @function
 		 * @param {me.ObjectEntity} obj Object to be removed
-		 * @param {Boolean=false} force Force immediate deletion.<br>
+		 * @param {Boolean} [force=false] Force immediate deletion.<br>
 		 * <strong>WARNING</strong>: Not safe to force asynchronously (e.g. onCollision callbacks)
 		 */
 		api.remove = function(obj, force) {
@@ -1525,7 +1589,7 @@ var me = me || {};
 					// make it invisible (this is bad...)
 					obj.visible = false;
 					// else wait the end of the current loop
-					/** @private */
+					/** @ignore */
 					pendingRemove = (function (obj) {
 						removeNow(obj);
 						pendingRemove = null;
@@ -1536,8 +1600,9 @@ var me = me || {};
 
 		/**
 		 * remove all objects<br>
-		 * @name me.game#removeAll
-		 * @param {Boolean=false} force Force immediate deletion.<br>
+		 * @name removeAll
+		 * @memberOf me.game
+		 * @param {Boolean} [force=false] Force immediate deletion.<br>
 		 * <strong>WARNING</strong>: Not safe to force asynchronously (e.g. onCollision callbacks)
 		 * @public
 		 * @function
@@ -1572,7 +1637,8 @@ var me = me || {};
 		 * <p>Normally all objects loaded through the LevelDirector are automatically sorted.
 		 * this function is however usefull if you create and add object during the game,
 		 * or need a specific sorting algorithm.<p>
-		 * @name me.game#sort
+		 * @name sort
+		 * @memberOf me.game
 		 * @public
 		 * @function
 		 * @param {Function} [sort_func="sorted on z property value"] sort function
@@ -1595,7 +1661,7 @@ var me = me || {};
 				if (typeof(sort_func) !== "function") {
 					sort_func = default_sort_func;
 				}
-				/** @private */
+				/** @ignore */
 				pendingSort = (function (sort_func) {
 					// sort everything
 					gameObjects.sort(sort_func);
@@ -1609,7 +1675,8 @@ var me = me || {};
 
 		/**
 		 * force the redraw (not update) of all objects
-		 * @name me.game#repaint
+		 * @name repaint
+		 * @memberOf me.game
 		 * @public
 		 * @function
 		 */
@@ -1620,8 +1687,10 @@ var me = me || {};
 
 		/**
 		 * draw all existing objects
-		 * @name me.game#draw
+		 * @name draw
+		 * @memberOf me.game
 		 * @private
+		 * @ignore
 		 * @function
 		 */
 

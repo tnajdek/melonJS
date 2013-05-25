@@ -6,12 +6,6 @@
  */
 
 (function($) {
-	
-	/** 
-	 * a local constant for the (Math.PI * 2) value
-	 * @private
-	 */
-	var PI2 = Math.PI * 2;
 
 	/**
 	 * A Simple object to display a sprite on screen.
@@ -21,7 +15,7 @@
 	 * @constructor
 	 * @param {int} x the x coordinates of the sprite object
 	 * @param {int} y the y coordinates of the sprite object
-	 * @param {me.loader#getImage} image reference to the Sprite Image
+	 * @param {Image} image reference to the Sprite Image. See {@link me.loader#getImage}
 	 * @param {int} [spritewidth] sprite width
 	 * @param {int} [spriteheigth] sprite height
 	 * @example
@@ -32,6 +26,7 @@
 	/** @scope me.SpriteObject.prototype */
 	{
 		// default scale ratio of the object
+		/** @ignore */
 		scale	   : null,
 
 		// if true, image flipping/scaling is needed
@@ -55,14 +50,20 @@
 		 * @name me.SpriteObject#angle
 		 */
 		angle: 0,
-		
+
+		/**
+		 * Source rotation angle for pre-rotating the source image<br>
+		 * Commonly used for TexturePacker
+		 * @ignore
+		 */
+		_sourceAngle: 0,
 
 		/**
 		 * Define the sprite opacity<br>
 		 * @see me.SpriteObject#setOpacity
 		 * @see me.SpriteObject#getOpacity 
 		 * @public
-		 * @type me.Vector2d
+		 * @type Number
 		 * @name me.SpriteObject#alpha
 		 */
 		alpha: 1.0,
@@ -96,7 +97,7 @@
 
 			// scale factor of the object
 			this.scale = new me.Vector2d(1.0, 1.0);
-			this.lastflipX = this.lastflipY = false,
+			this.lastflipX = this.lastflipY = false;
 			this.scaleFlag = false;
 
 			// set the default sprite index & offset
@@ -116,8 +117,12 @@
 		},
 
 		/**
-		 *	specify a transparent color
-		 *	@param {String} color color key in rgb format (rrggbb or #rrggbb)
+		 * specify a transparent color
+		 * @name setTransparency
+		 * @memberOf me.SpriteObject
+		 * @function
+		 * @deprecated Use PNG or GIF with transparency instead
+		 * @param {String} color color key in "#RRGGBB" format
 		 */
 		setTransparency : function(col) {
 			// remove the # if present
@@ -128,7 +133,10 @@
 
 		/**
 		 * return the flickering state of the object
-		 * @return Boolean
+		 * @name isFlickering
+		 * @memberOf me.SpriteObject
+		 * @function
+		 * @return {Boolean}
 		 */
 		isFlickering : function() {
 			return this.flickering;
@@ -137,8 +145,11 @@
 
 		/**
 		 * make the object flicker
-		 * @param {Int} duration
-		 * @param {Function} callback
+		 * @name flicker
+		 * @memberOf me.SpriteObject
+		 * @function
+		 * @param {Int} duration expressed in frames
+		 * @param {Function} callback Function to call when flickering ends
 		 * @example
 		 * // make the object flicker for 60 frame
 		 * // and then remove it
@@ -160,8 +171,11 @@
 
 
 		/**
-		 *	Flip object on horizontal axis
-		 *	@param {Boolean} flip enable/disable flip
+		 * Flip object on horizontal axis
+		 * @name flipX
+		 * @memberOf me.SpriteObject
+		 * @function
+		 * @param {Boolean} flip enable/disable flip
 		 */
 		flipX : function(flip) {
 			if (flip != this.lastflipX) {
@@ -176,8 +190,11 @@
 		},
 
 		/**
-		 *	Flip object on vertical axis
-		 *	@param {Boolean} flip enable/disable flip
+		 * Flip object on vertical axis
+		 * @name flipY
+		 * @memberOf me.SpriteObject
+		 * @function
+		 * @param {Boolean} flip enable/disable flip
 		 */
 		flipY : function(flip) {
 			if (flip != this.lastflipY) {
@@ -192,8 +209,11 @@
 		},
 
 		/**
-		 *	Resize the sprite around his center<br>
-		 *	@param {Number} ratio scaling ratio
+		 * Resize the sprite around his center<br>
+		 * @name resize
+		 * @memberOf me.SpriteObject
+		 * @function
+		 * @param {Number} ratio scaling ratio
 		 */
 		resize : function(ratio) {
 			if (ratio > 0) {
@@ -205,16 +225,22 @@
 		},
 
 		/**
-		 *	get the sprite alpha channel value<br>
-		 *  @return current opacity value between 0 and 1
+		 * get the sprite alpha channel value<br>
+		 * @name getOpacity
+		 * @memberOf me.SpriteObject
+		 * @function
+		 * @return {Number} current opacity value between 0 and 1
 		 */
 		getOpacity : function() {
 			return this.alpha;
 		},
 		
 		/**
-		 *	set the sprite alpha channel value<br>
-		 *	@param {alpha} alpha opacity value between 0 and 1
+		 * set the sprite alpha channel value<br>
+		 * @name setOpacity
+		 * @memberOf me.SpriteObject
+		 * @function
+		 * @param {alpha} alpha opacity value between 0 and 1
 		 */
 		setOpacity : function(alpha) {
 			if (typeof (alpha) === "number") {
@@ -226,6 +252,9 @@
 		 * sprite update<br>
 		 * not to be called by the end user<br>
 		 * called by the game manager on each game loop
+		 * @name update
+		 * @memberOf me.SpriteObject
+		 * @function
 		 * @protected
 		 * @return false
 		 **/
@@ -247,6 +276,9 @@
 		 * object draw<br>
 		 * not to be called by the end user<br>
 		 * called by the game manager on each game loop
+		 * @name draw
+		 * @memberOf me.SpriteObject
+		 * @function
 		 * @protected
 		 * @param {Context2d} context 2d Context on which draw our object
 		 **/
@@ -266,27 +298,36 @@
 
 			// clamp position vector to pixel grid
 			var xpos = ~~this.pos.x, ypos = ~~this.pos.y;
-			
-			if ((this.scaleFlag) || (this.angle!==0)) {
+
+			var w = this.width, h = this.height;
+			var angle = this.angle + this._sourceAngle;
+
+			if ((this.scaleFlag) || (angle!==0)) {
 				// calculate pixel pos of the anchor point
-				var ax = this.width * this.anchorPoint.x, ay = this.height * this.anchorPoint.y;
+				var ax = w * this.anchorPoint.x, ay = h * this.anchorPoint.y;
 				// translate to the defined anchor point
 				context.translate(xpos + ax, ypos + ay);
 				// scale
 				if (this.scaleFlag)
 					context.scale(this.scale.x, this.scale.y);
-				if (this.angle!==0)
-					context.rotate(this.angle);
-				// reset coordinates back to upper left coordinates
-				xpos = -ax;
-				ypos = -ay;
+				if (angle!==0)
+					context.rotate(angle);
+
+				if (this._sourceAngle!==0) {
+					// swap w and h for rotated source images
+					w = this.height, h = this.width;
+					xpos = -ay, ypos = -ax;
+				}
+				else
+					// reset coordinates back to upper left coordinates
+					xpos = -ax, ypos = -ay;
 			}
 
 			context.drawImage(this.image,
 							this.offset.x, this.offset.y,
-							this.width, this.height,
+							w, h,
 							xpos, ypos,
-							this.width, this.height);
+							w, h);
 
 			
 			// restore the context
@@ -300,7 +341,7 @@
 
 		/**
 		 * Destroy function<br>
-		 * @private
+		 * @ignore
 		 */
 		destroy : function() {
 			this.onDestroyEvent.apply(this, arguments);
@@ -309,6 +350,9 @@
 		/**
 		 * OnDestroy Notification function<br>
 		 * Called by engine before deleting the object
+		 * @name onDestroyEvent
+		 * @memberOf me.SpriteObject
+		 * @function
 		 */
 		onDestroyEvent : function() {
 			;// to be extended !
@@ -325,14 +369,17 @@
 	 * @constructor
 	 * @param {int} x the x coordinates of the sprite object
 	 * @param {int} y the y coordinates of the sprite object
-	 * @param {me.loader#getImage} Image reference of the animation sheet
+	 * @param {Image} image reference of the animation sheet
 	 * @param {int} spritewidth width of a single sprite within the spritesheet
-	 * @param {int} [spriteheight] height of a single sprite within the spritesheet (value will be set to the image height if not specified)
+	 * @param {int} [spriteheight=image.height] height of a single sprite within the spritesheet
 	 */
 	me.AnimationSheet = me.SpriteObject.extend(
 	/** @scope me.AnimationSheet.prototype */
 	{
-		// count the fps and manage animation change
+		/** 
+		 * count the fps and manage animation change
+		 * @ignore
+		 */
 		fpscount : 0,
 		
 		// Spacing and margin
@@ -357,8 +404,8 @@
 		 */
 		animationspeed : 0,
 
-		/** @private */
-		init : function(x, y, image, spritewidth, spriteheight, spacing, margin, atlas) {
+		/** @ignore */
+		init : function(x, y, image, spritewidth, spriteheight, spacing, margin, atlas, atlasIndices) {
 			// hold all defined animation
 			this.anim = [];
 
@@ -370,26 +417,20 @@
 						
 			// default animation speed
 			this.animationspeed = me.sys.fps / 10;
-			
-			// amount of sprite in the png/texture
-			this.spritecount = null ;
 
 			// Spacing and margin
 			this.spacing = spacing || 0;
 			this.margin = margin || 0;
-			
-			// to keep track of angle change
-			// (texture packer)
-			this.defaultAngle = 0;
 
 			// call the constructor
 			this.parent(x, y, image, spritewidth, spriteheight, spacing, margin);
 						
 			// store the current atlas information
 			this.textureAtlas = null;
+			this.atlasIndices = null;
 			
 			// build the local textureAtlas
-			this.buildLocalAtlas(atlas || undefined);
+			this.buildLocalAtlas(atlas || undefined, atlasIndices || undefined);
 			
 			// create a default animation sequence with all sprites
 			this.addAnimation("default", null);
@@ -399,36 +440,31 @@
 		},
 		
 		/**
-		 * build a
-		 * @private
+		 * build the local (private) atlas
+		 * @ignore
 		 */
-		buildLocalAtlas : function (atlas) {
+		buildLocalAtlas : function (atlas, indices) {
 			// reinitialze the atlas
 			if (atlas !== undefined) {
 				this.textureAtlas = atlas;
-				// initialize sprite count
-				this.spritecount = new me.Vector2d(this.textureAtlas.length, 1);
+				this.atlasIndices = indices;
 			} else {
 				// regular spritesheet
 				this.textureAtlas = [];
 				// calculate the sprite count (line, col)
-				this.spritecount = new me.Vector2d(~~((this.image.width - this.margin) / (this.width + this.spacing)),
-												   ~~((this.image.height - this.margin) / (this.height + this.spacing)));
+				var spritecount = new me.Vector2d(
+					~~((this.image.width - this.margin) / (this.width + this.spacing)),
+					~~((this.image.height - this.margin) / (this.height + this.spacing))
+				);
 
-				// if one single image, disable animation
-				if ((this.spritecount.x * this.spritecount.y) == 1) {
-					// override setAnimationFrame with an empty function
-					/** @private */
-					this.setAnimationFrame = function() {;};
-				}
-				
 				// build the local atlas
-				for ( var frame = 0, count = this.spritecount.x * this.spritecount.y; frame < count ; frame++) {
+				for ( var frame = 0, count = spritecount.x * spritecount.y; frame < count ; frame++) {
 					this.textureAtlas[frame] = {
+						name: ''+frame,
 						offset: new me.Vector2d(
-									this.margin + (this.spacing + this.width) * (frame % this.spritecount.x),
-									this.margin + (this.spacing + this.height) * ~~(frame / this.spritecount.x)
-								),
+							this.margin + (this.spacing + this.width) * (frame % spritecount.x),
+							this.margin + (this.spacing + this.height) * ~~(frame / spritecount.x)
+						),
 						width: this.width,
 						height: this.height,
 						angle: 0
@@ -439,11 +475,15 @@
 
 		/**
 		 * add an animation <br>
-		 * the index list must follow the logic as per the following example :<br>
-		 * <img src="spritesheet_grid.png"/>
+		 * For fixed-sized cell spritesheet, the index list must follow the logic as per the following example :<br>
+		 * <img src="images/spritesheet_grid.png"/>
+		 * @name addAnimation
+		 * @memberOf me.AnimationSheet
+		 * @function
 		 * @param {String} name animation id
-		 * @param {Int[]} index list of sprite index defining the animaton
-		 * @param {Int} [speed=@see me.AnimationSheet.animationspeed], cycling speed for animation in fps (lower is faster).
+		 * @param {Int[]|String[]} index list of sprite index or name defining the animaton
+		 * @param {Int} [animationspeed] cycling speed for animation in fps (lower is faster).
+		 * @see me.AnimationSheet#animationspeed
 		 * @example
 		 * // walking animatin
 		 * this.addAnimation ("walk", [0,1,2,3,4,5]);
@@ -454,7 +494,7 @@
 		 * // slower animation
 		 * this.addAnimation ("roll", [7,8,9,10], 10);
 		 */
-		addAnimation : function(name, frame, animationspeed) {
+		addAnimation : function(name, index, animationspeed) {
 			this.anim[name] = {
 				name : name,
 				frame : [],
@@ -463,34 +503,62 @@
 				animationspeed: animationspeed || this.animationspeed
 			};
 
-			if (frame == null) {
-				frame = [];
-				// create a default animation with all sprites in the spritesheet
-				for ( var i = 0, count = this.spritecount.x * this.spritecount.y; i < count ; i++) {
-					frame[i] = i;
-				}
+			if (index == null) {
+				index = [];
+				var i = 0;
+				// create a default animation with all frame
+				this.textureAtlas.forEach(function() {
+					index[i] = i++;
+				});
 			}
 
 			// set each frame configuration (offset, size, etc..)
-			for ( var i = 0 , len = frame.length ; i < len; i++) {
-				this.anim[name].frame[i] = this.textureAtlas[frame[i]];
+			for ( var i = 0 , len = index.length ; i < len; i++) {
+				if (typeof(index[i]) === "number") {
+					this.anim[name].frame[i] = this.textureAtlas[index[i]];
+				} else { // string
+					if (this.atlasIndices === null) {
+						throw "melonjs: string parameters for addAnimation are only allowed for TextureAtlas ";
+					} else {
+						this.anim[name].frame[i] = this.textureAtlas[this.atlasIndices[index[i]]];
+					}
+				}
 			}
 			this.anim[name].length = this.anim[name].frame.length;
 		},
 		
 		/**
 		 * set the current animation
+		 * @name setCurrentAnimation
+		 * @memberOf me.AnimationSheet
+		 * @function
 		 * @param {String} name animation id
-		 * @param {Object} [onComplete] animation id to switch to when complete, or callback
+		 * @param {String|Function} [onComplete] animation id to switch to when complete, or callback
 		 * @example
 		 * // set "walk" animation
 		 * this.setCurrentAnimation("walk");
+		 *
 		 * // set "eat" animation, and switch to "walk" when complete
 		 * this.setCurrentAnimation("eat", "walk");
+		 *
 		 * // set "die" animation, and remove the object when finished
-		 * this.setCurrentAnimation("die", function(){me.game.remove(this)});
+		 * this.setCurrentAnimation("die", (function () {
+		 *    me.game.remove(this);
+		 *	  return false; // do not reset to first frame
+		 * }).bind(this));
+		 *
+		 * // set "attack" animation, and pause for a short duration
+		 * this.setCurrentAnimation("die", (function () {
+		 *    this.animationpause = true;
+		 *
+		 *    // back to "standing" animation after 1 second
+		 *    setTimeout(function () {
+		 *        this.setCurrentAnimation("standing");
+		 *    }, 1000);
+		 *
+		 *	  return false; // do not reset to first frame
+		 * }).bind(this));
 		 **/
-
 		setCurrentAnimation : function(name, resetAnim) {
 			if (this.anim[name]) {
 				this.current = this.anim[name];
@@ -503,7 +571,11 @@
 
 		/**
 		 * return true if the specified animation is the current one.
+		 * @name isCurrentAnimation
+		 * @memberOf me.AnimationSheet
+		 * @function
 		 * @param {String} name animation id
+		 * @return {Boolean}
 		 * @example
 		 * if (!this.isCurrentAnimation("walk"))
 		 * {
@@ -516,7 +588,10 @@
 
 		/**
 		 * force the current animation frame index.
-		 * @param {int} [index=0]
+		 * @name setAnimationFrame
+		 * @memberOf me.AnimationSheet
+		 * @function
+		 * @param {int} [index=0] animation frame index
 		 * @example
 		 * //reset the current animation to the first frame
 		 * this.setAnimationFrame();
@@ -527,15 +602,15 @@
 			this.offset = frame.offset;
 			this.width = frame.width;
 			this.height = frame.height;
-			if (this.defaultAngle !== frame.angle) {
-				this.angle = (this.angle + frame.angle - this.defaultAngle) % (PI2);
-				this.defaultAngle = frame.angle;
-			}
+			this._sourceAngle = frame.angle;
 		},
 		
 		/**
 		 * return the current animation frame index.
-		 * @param {int} index
+		 * @name getCurrentAnimationFrame
+		 * @memberOf me.AnimationSheet
+		 * @function
+		 * @return {int} current animation frame index
 		 */
 		getCurrentAnimationFrame : function() {
 			return this.current.idx;
@@ -544,11 +619,14 @@
 		/**
 		 * update the animation<br>
 		 * this is automatically called by the game manager {@link me.game}
+		 * @name update
+		 * @memberOf me.AnimationSheet
+		 * @function
 		 * @protected
 		 */
 		update : function() {
 			// update animation if necessary
-			if (this.visible && !this.animationpause && (this.fpscount++ > this.current.animationspeed)) {
+			if (!this.animationpause && (this.fpscount++ > this.current.animationspeed)) {
 				this.setAnimationFrame(++this.current.idx);
 				this.fpscount = 0;
 
@@ -559,8 +637,11 @@
 					if (typeof(this.resetAnim) == "string")
 						this.setCurrentAnimation(this.resetAnim);
 					// if function (callback) call it
-					else if (typeof(this.resetAnim) == "function")
-						this.resetAnim();
+					else if (typeof(this.resetAnim) == "function" && this.resetAnim() === false) {
+						this.current.idx = this.current.length - 1;
+						this.parent();
+						return false;
+					}
 				}
 				return this.parent() || true;
 			}

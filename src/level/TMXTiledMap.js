@@ -12,14 +12,15 @@
 		
 	/**
 	 * a TMX Tile Map Object
-	 * Tile QT 0.7.x format
+	 * Tiled QT 0.7.x format
 	 * @class
 	 * @memberOf me
 	 * @constructor
+	 * @param {String} levelId name of TMX map
 	 */
 	me.TMXTileMap = me.Renderable.extend({
 		// constructor
-		init: function(levelId, x, y) {
+		init: function(levelId) {
 			
 			// map id
 			this.levelId = levelId;
@@ -88,12 +89,12 @@
 			// tileset(s)
 			this.tilesets = null;
 
-			this.parent(new me.Vector2d(x, y), 0, 0);
+			this.parent(new me.Vector2d(), 0, 0);
 		},
 		
 		/**
 		 * a dummy update function
-		 * @private
+		 * @ignore
 		 */
 		reset : function() {
 			if (this.initialized === true) {
@@ -119,7 +120,7 @@
 		
 		/**
 		 * return the specified object group
-		 * @private	
+		 * @ignore	
 		 */
 		getObjectGroupByName : function(name) {
 			var objectGroup = null;
@@ -136,7 +137,7 @@
 
 		/**
 		 * return all the object group
-		 * @private		
+		 * @ignore		
 		 */
 		getObjectGroups : function() {
 			return this.objectGroups;

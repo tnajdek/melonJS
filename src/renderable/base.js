@@ -13,14 +13,17 @@
 	 * @extends me.Rect
 	 * @memberOf me
 	 * @constructor
-	 * @param {me.Vector2d} position of the renderable object
-	 * @param {int} object width
-	 * @param {int} object height
+	 * @param {me.Vector2d} pos position of the renderable object
+	 * @param {int} width object width
+	 * @param {int} height object height
 	 */
 	me.Renderable = me.Rect.extend(
 	/** @scope me.Renderable.prototype */
 	{
-		// to identify the object as a renderable object
+		/**
+		 * to identify the object as a renderable object
+		 * @ignore
+		 */
 		isRenderable: true,
 		
 		/**
@@ -28,7 +31,8 @@
 		 * default value : true
 		 * @public
 		 * @type Boolean
-		 * @name me.Renderable#visible
+		 * @name visible
+		 * @memberOf me.Renderable
 		 */
 		visible : true,
 
@@ -38,17 +42,29 @@
 		 * @public
 		 * @readonly
 		 * @type Boolean
-		 * @name me.Renderable#inViewport
+		 * @name inViewport
+		 * @memberOf me.Renderable
 		 */
 		inViewport : false,
-		
+
 		/**
-		 * make the renderable object persistent over level changes
+		 * Whether the renderable object will always update, even when outside of the viewport<br>
+		 * default value : false
+		 * @public
+		 * @type Boolean
+		 * @name alwaysUpdate
+		 * @memberOf me.Renderable
+		 */
+		alwaysUpdate : false,
+
+		/**
+		 * make the renderable object persistent over level changes<br>
 		 * default value : false
 		 * @public
 		 * @readonly
 		 * @type Boolean
-		 * @name me.Renderable#isPersistent
+		 * @name isPersistent
+		 * @memberOf me.Renderable
 		 */
 		isPersistent : false,
 		
@@ -58,7 +74,8 @@
 		 * default value : false
 		 * @public
 		 * @type Boolean
-		 * @name me.Renderable#floating
+		 * @name floating
+		 * @memberOf me.Renderable
 		 */
 		floating: false,
 
@@ -73,6 +90,9 @@
 		/**
 		 * update function
 		 * called by the game manager on each game loop
+		 * @name update
+		 * @memberOf me.Renderable
+		 * @function
 		 * @protected
 		 * @return false
 		 **/
@@ -83,6 +103,9 @@
 		/**
 		 * object draw
 		 * called by the game manager on each game loop
+		 * @name draw
+		 * @memberOf me.Renderable
+		 * @function
 		 * @protected
 		 * @param {Context2d} context 2d Context on which draw our object
 		 **/
