@@ -539,7 +539,8 @@
 			this.collisionMap = me.game.collisionMap;
 			
 			// create a a default collision rectangle
-			this.collisionBox = new me.Rect(this.pos, this.width, this.height);
+			// (keep it for now, for backward compatiblity)
+			this.collisionBox = this;
 			
 			/**
 			 * Define if an entity can go through breakable tiles<br>
@@ -569,13 +570,14 @@
 		 * @name updateColRect
 		 * @memberOf me.ObjectEntity
 		 * @function
+		 * @deprecated please use the new resize function
 		 * @param {int} x x offset (specify -1 to not change the width)
 		 * @param {int} w width of the hit box
 		 * @param {int} y y offset (specify -1 to not change the height)
 		 * @param {int} h height of the hit box
 		 */
 		updateColRect : function(x, w, y, h) {
-			this.collisionBox.adjustSize(x, w, y, h);
+			this.adjustSize(x, w, y, h);
 		},
 
 		/**
@@ -656,8 +658,7 @@
 					// flip the animation
 					this.renderable.flipX(flip);
 				}
-				// flip the collision box
-				this.collisionBox.flipX(this.width);
+				this.parent();
 			}
 		},
 
@@ -675,8 +676,8 @@
 					// flip the animation
 					this.renderable.flipY(flip);
 				}
-				// flip the collision box
-				this.collisionBox.flipY(this.height);
+				// invert the anchor point
+				this.parent();
 			}
 		},
 
@@ -1129,9 +1130,9 @@
 				context.translate(-x, -y);
 			}
 			// check if debug mode is enabled
-			if (me.debug.renderHitBox && this.collisionBox) {
+			if (me.debug.renderHitBox) {
 				// draw the collisionBox
-				this.collisionBox.draw(context, "red");
+				this.parent(context, "red");
 			}
 			if (me.debug.renderVelocity) {
 				// draw entity current velocity
@@ -1162,7 +1163,6 @@
 			}
 			this.onDestroyEvent.apply(this, arguments);
 			this.pos = null;
-			this.collisionBox = null;
 		},
 
 		/**

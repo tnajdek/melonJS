@@ -428,20 +428,7 @@
 		 * @memberOf me.Rect
 		 */
 		pos : null,
-
-		/**
-		 * allow to reduce the collision box size<p>
-		 * while keeping the original position vector (pos)<p>
-		 * corresponding to the entity<p>
-		 * colPos is a relative offset to pos
-		 * @ignore
-		 * @type me.Vector2d
-		 * @name colPos
-		 * @memberOf me.Rect
-		 * @see me.Rect#adjustSize
-		 */
-		colPos : null,
-		
+	
 		/**
 		 * Define the object anchoring point<br>
 		 * This is used when positioning, or scaling the object<br>
@@ -458,7 +445,6 @@
 				
 		/**
 		 * left coordinate of the Rectange<br>
-		 * takes in account the adjusted size of the rectangle (if set)
 		 * @public
 		 * @type Int
 		 * @name left
@@ -468,7 +454,6 @@
 		
 		/**
 		 * right coordinate of the Rectange<br>
-		 * takes in account the adjusted size of the rectangle (if set)
 		 * @public
 		 * @type Int
 		 * @name right
@@ -478,7 +463,6 @@
 		 
 		/**
 		 * bottom coordinate of the Rectange<br>
-		 * takes in account the adjusted size of the rectangle (if set)
 		 * @public
 		 * @type Int
 		 * @name bottom
@@ -488,7 +472,6 @@
 		
 		/**
 		 * top coordinate of the Rectange<br>
-		 * takes in account the adjusted size of the rectangle (if set)
 		 * @public
 		 * @type Int
 		 * @name top
@@ -523,11 +506,6 @@
 			// reference to the initial position
 			// we don't copy it, so we can use it later
 			this.pos = v;
-
-			// allow to reduce the hitbox size
-			// while on keeping the original pos vector
-			// corresponding to the entity
-			this.colPos = new me.Vector2d();
 
 			this.width = w;
 			this.height = h;
@@ -576,8 +554,8 @@
 		 * @memberOf me.Rect
 		 * @function
 		 * @param {me.Vector2d} v x,y position for the rectangle
-		 * @param {int} w width of the rectangle
-		 * @param {int} h height of the rectangle	 
+		 * @param {Number} w width of the rectangle
+		 * @param {Number} h height of the rectangle	 
 		 */
 		set : function(v, w, h) {
 			this.pos = v; // Vector2d - top left corner
@@ -589,6 +567,19 @@
 			this.hHeight = ~~(h / 2);
 		},
 
+		/**
+		 * resize the rectange
+		 * @name resize
+		 * @memberOf me.Rect
+		 * @function
+		 * @param {Number} w width of the rectangle
+		 * @param {Number} h height of the rectangle
+		 */
+		resize : function(w, h) {
+			this.set(this.pos, w, h);
+		},
+
+		
 		/**
 		 * return a new Rect with this rectangle coordinates
 		 * @name getRect
@@ -640,12 +631,8 @@
 			var x1 = Math.min(this.pos.x, r.pos.x);
 			var y1 = Math.min(this.pos.y, r.pos.y);
 
-			this.width = Math.ceil(Math.max(this.pos.x + this.width,
-					r.pos.x + r.width)
-					- x1);
-			this.height = Math.ceil(Math.max(this.pos.y + this.height,
-					r.pos.y + r.height)
-					- y1);
+			this.width = Math.ceil(Math.max(this.pos.x + this.width, r.pos.x + r.width)	- x1);
+			this.height = Math.ceil(Math.max(this.pos.y + this.height, r.pos.y + r.height) - y1);
 			this.pos.x = ~~x1;
 			this.pos.y = ~~y1;
 
@@ -653,90 +640,43 @@
 		},
 
 		/**
-		 * update the size of the collision rectangle<br>
-		 * the colPos Vector is then set as a relative offset to the initial position (pos)<br>
-		 * <img src="images/me.Rect.colpos.png"/>
+		 * update the size of the collision rectangle
 		 * @name adjustSize
 		 * @memberOf me.Rect
 		 * @function
+		 * @deprecated please use the new resize function
 		 * @param {int} x x offset (specify -1 to not change the width)
 		 * @param {int} w width of the hit box
 		 * @param {int} y y offset (specify -1 to not change the height)
 		 * @param {int} h height of the hit box
 		 */
 		adjustSize : function(x, w, y, h) {
-			if (x != -1) {
-				this.colPos.x = x;
-				this.width = w;
-				this.hWidth = ~~(this.width / 2);
-				
-				// avoid Property definition if not necessary
-				if (this.left !== this.pos.x + this.colPos.x) {
-					// redefine our properties taking colPos into account
-					Object.defineProperty(this, "left", {
-						get : function() {
-							return this.pos.x + this.colPos.x;
-						},
-						configurable : true
-					});
-				}
-				if (this.right !== this.pos.x + this.colPos.x + this.width) {
-					Object.defineProperty(this, "right", {
-						get : function() {
-							return this.pos.x + this.colPos.x + this.width;
-						},
-						configurable : true
-					});
-				}
-			}
-			if (y != -1) {
-				this.colPos.y = y;
-				this.height = h;
-				this.hHeight = ~~(this.height / 2);
-				
-				// avoid Property definition if not necessary
-				if (this.top !== this.pos.y + this.colPos.y) {
-					// redefine our properties taking colPos into account
-					Object.defineProperty(this, "top", {
-						get : function() {
-							return this.pos.y + this.colPos.y;
-						},
-						configurable : true
-					});
-				}
-				if (this.bottom !== this.pos.y + this.colPos.y + this.height) {
-					Object.defineProperty(this, "bottom", {
-						get : function() {
-							return this.pos.y + this.colPos.y + this.height;
-						},
-						configurable : true
-					});
-				}
-			}
+			// keep it for backward compatibility
+			this.resize(x!==-1?Math.abs(w-x):this.width,y!==-1?Math.abs(h-y):this.height);
 		},
 
 		/**
-		 *	
-		 * flip on X axis
-		 * usefull when used as collision box, in a non symetric way
-		 * @ignore
-		 * @param sw the sprite width
+		 * Flip the rectangle on horizontal axis
+		 * @name flipX
+		 * @memberOf me.Rect
+		 * @function
 		 */
-		flipX : function(sw) {
-			this.colPos.x = sw - this.width - this.colPos.x;
-			this.hWidth = ~~(this.width / 2);
+		flipX : function() {
+			// invert the anchor point
+			this.anchorPoint.x = 1.0 - this.anchorPoint.x;
+			// TODO: adjust rect position if non symetric (anchorPoint !=0.5) 
 		},
 
 		/**
-		 *	
-		 * flip on Y axis
-		 * usefull when used as collision box, in a non symetric way
-		 * @ignore
-		 * @param sh the height width
+		 * Flip the rectangle on vertical axis
+		 * @name flipY
+		 * @memberOf me.Rect
+		 * @function
 		 */
-		flipY : function(sh) {
-			this.colPos.y = sh - this.height - this.colPos.y;
-			this.hHeight = ~~(this.height / 2);
+		flipY : function() {
+			// invert the anchor point
+			this.anchorPoint.y = 1.0 - this.anchorPoint.y;
+			// TODO: adjust rect position if non symetric (anchorPoint !=0.5)
 		},
 		
 		/**
