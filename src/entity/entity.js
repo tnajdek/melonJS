@@ -657,9 +657,11 @@
 				if (this.renderable && this.renderable.flipX) {
 					// flip the animation
 					this.renderable.flipX(flip);
+					// flip the entity rect
+					this.parent(flip, this.renderable.width);
 				}
-				this.parent();
 			}
+				
 		},
 
 		/**
@@ -675,12 +677,11 @@
 				if (this.renderable  && this.renderable.flipY) {
 					// flip the animation
 					this.renderable.flipY(flip);
+					// flip the entity rect
+					this.parent(flip, this.renderable.height);
 				}
-				// invert the anchor point
-				this.parent();
 			}
 		},
-
 
 		/**
 		 * helper function for platform games: <br>

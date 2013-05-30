@@ -660,11 +660,20 @@
 		 * @name flipX
 		 * @memberOf me.Rect
 		 * @function
+		 * @param {boolean} flip flip(true)/unflip(false)
+		 * @param {int} w relative width on which flip the rectangle
 		 */
-		flipX : function() {
-			// invert the anchor point
-			this.anchorPoint.x = 1.0 - this.anchorPoint.x;
-			// TODO: adjust rect position if non symetric (anchorPoint !=0.5) 
+		flipX : function(flip, width) {
+			if (this.anchorPoint.x !== 0.5) {
+				// adjust the rect position
+				if (flip) {
+					this.pos.x -= width - this.width;
+				} else {
+					this.pos.x += width - this.width;
+				}
+				// invert the anchor point
+				this.anchorPoint.x = 1.0 - this.anchorPoint.x;
+			}
 		},
 
 		/**
@@ -672,11 +681,20 @@
 		 * @name flipY
 		 * @memberOf me.Rect
 		 * @function
+		 * @param {boolean} flip flip(true)/unflip(false)
+		 * @param {int} w relative height on which flip the rectangle
 		 */
-		flipY : function() {
-			// invert the anchor point
-			this.anchorPoint.y = 1.0 - this.anchorPoint.y;
-			// TODO: adjust rect position if non symetric (anchorPoint !=0.5)
+		flipY : function(flip, height) {
+			if (this.anchorPoint.y !== 0.5) {
+				// adjust the rect position
+				if (flip) {
+					this.pos.y -= height - this.height;
+				} else {
+					this.pos.y += height - this.height;
+				}
+				// invert the anchor point
+				this.anchorPoint.y = 1.0 - this.anchorPoint.y;
+			}
 		},
 		
 		/**
