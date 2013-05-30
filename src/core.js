@@ -1683,7 +1683,7 @@ window.me = window.me || {};
 			{
 				if ((obj.inViewport || obj.alwaysUpdate) && obj.collidable && (obj!=objA))
 				{
-					res = obj.collisionBox.collideVsAABB.call(obj.collisionBox, objA.collisionBox);
+					res = obj.collideVsAABB.call(obj, objA);
 					if (res.x != 0 || res.y != 0) {
 						// notify the object
 						obj.onCollision.call(obj, res, objA);
@@ -1725,7 +1725,7 @@ window.me = window.me || {};
 			{
 				if ((obj.inViewport || obj.alwaysUpdate) && obj.collidable && (obj.type === type) && (obj!=objA))
 				{
-					res = obj.collisionBox.collideVsAABB.call(obj.collisionBox, objA.collisionBox);
+					res = obj.collideVsAABB.call(obj, objA);
 					if (res.x != 0 || res.y != 0) {
 						// notify the object
 						obj.onCollision.call(obj, res, objA);

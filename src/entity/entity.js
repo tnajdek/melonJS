@@ -353,6 +353,7 @@
 		 * @public
 		 * @type me.Rect
 		 * @name collisionBox
+		 * @deprecated
 		 * @memberOf me.ObjectEntity
 		 */
 		collisionBox : null,
@@ -856,9 +857,9 @@
 			// normally the check should be on the object center point,
 			// but since the collision check is done on corner, we must do the same thing here
 			if (left)
-				this.slopeY = tile.height - (this.collisionBox.right + this.vel.x - tile.pos.x);
+				this.slopeY = tile.height - (this.right + this.vel.x - tile.pos.x);
 			else
-				this.slopeY = (this.collisionBox.left + this.vel.x - tile.pos.x);
+				this.slopeY = (this.left + this.vel.x - tile.pos.x);
 
 			// cancel y vel
 			this.vel.y = 0;
@@ -948,7 +949,7 @@
 			// Adjust position only on collidable object
 			if (this.collidable) {
 				// check for collision
-				var collision = this.collisionMap.checkCollision(this.collisionBox, this.vel);
+				var collision = this.collisionMap.checkCollision(this, this.vel);
 
 				// update some flags
 				this.onslope  = collision.yprop.isSlope || collision.xprop.isSlope;
@@ -964,11 +965,11 @@
 
 					if (collision.y > 0) {
 						if (collision.yprop.isSolid	|| 
-							(collision.yprop.isPlatform && (this.collisionBox.bottom - 1 <= collision.ytile.pos.y)) ||
+							(collision.yprop.isPlatform && (this.bottom - 1 <= collision.ytile.pos.y)) ||
 							(collision.yprop.isTopLadder && !this.disableTopLadderCollision)) {
 							// adjust position to the corresponding tile
 							this.pos.y = ~~this.pos.y;
-							this.vel.y = (this.falling) ?collision.ytile.pos.y - this.collisionBox.bottom: 0 ;
+							this.vel.y = (this.falling) ?collision.ytile.pos.y - this.bottom: 0 ;
 							this.falling = false;
 						}
 						else if (collision.yprop.isSlope && !this.jumping) {
@@ -986,7 +987,7 @@
 							else {
 								// adjust position to the corresponding tile
 								this.pos.y = ~~this.pos.y;
-								this.vel.y = (this.falling) ?collision.ytile.pos.y - this.collisionBox.bottom: 0;
+								this.vel.y = (this.falling) ?collision.ytile.pos.y - this.bottom: 0;
 								this.falling = false;
 							}
 						}
@@ -1132,7 +1133,7 @@
 			}
 			// check if debug mode is enabled
 			if (me.debug.renderHitBox) {
-				// draw the collisionBox
+				// draw the entity Rect
 				this.parent(context, "red");
 			}
 			if (me.debug.renderVelocity) {
