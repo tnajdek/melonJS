@@ -16,10 +16,6 @@ game.PlayerEntity = me.ObjectEntity.extend({
 		this.setVelocity(3, 15);
 		this.setFriction(0.4,0);
 		
-		// update the hit box
-		this.updateColRect(20,32, -1,0);
-		this.dying = false;
-		
 		this.mutipleJump = 1;
 
 		// set the display around our position
@@ -45,7 +41,9 @@ game.PlayerEntity = me.ObjectEntity.extend({
 		this.renderable.addAnimation ("walk",  ["walk0001.png", "walk0002.png", "walk0003.png"]);
 		// set as default
 		this.renderable.setCurrentAnimation("walk");
-
+		
+		// lower the size of the entity rect
+		this.resize(12, this.height);
 		// set the renderable position to bottom center
 		this.anchorPoint.set(0.5, 1.0);
 	},
