@@ -564,10 +564,7 @@
 		},
 
 		/**
-		 * specify the size of the hit box for collision detection<br>
-		 * (allow to have a specific size for each object)<br>
-		 * e.g. : object with resized collision box :<br>
-		 * <img src="images/me.Rect.colpos.png"/>
+		 * specify the size of the rectangle for collision detection<br>
 		 * @name updateColRect
 		 * @memberOf me.ObjectEntity
 		 * @function
