@@ -18,7 +18,7 @@
 	 * @memberOf me
 	 * @constructor
 	 * @param {Boolean} [addAsObject] add the object in the game manager object pool<br>
-	 * @param {Boolean} [isPersistent] make the screen persistent over level changes<br>
+	 * @param {Boolean} [isPersistent] make the screen persistent over level changes; requires addAsObject=true<br>
 	 * @see me.state
 	 * @example
 	 * // create a custom loading screen
@@ -101,12 +101,22 @@
 	/** @scope me.ScreenObject.prototype */	
 	{
 		/** @ignore */
-		addAsObject	: false,
+		addAsObject : false,
 		/** @ignore */
-		z : 999,
-		/**@ignore*/
+		visible : false,
+		/** @ignore */
 		frame : 0,
-		maxfps : 0,
+
+		/**
+		 * Z-order for object sorting<br>
+		 * only used by the engine if the object has been initialized using addAsObject=true<br>
+		 * default value : 999
+		 * @private
+		 * @type Number
+		 * @name z
+		 * @memberOf me.ScreenObject
+		 */
+		z : 999,
 
 		/**
 		 * initialization function
@@ -162,7 +172,7 @@
 		/**
 		 * update function<br>
 		 * optional empty function<br>
-		 * only used by the engine if the object has been initialized using addAsObject parameter set to true<br>
+		 * only used by the engine if the object has been initialized using addAsObject=true<br>
 		 * @name update
 		 * @memberOf me.ScreenObject
 		 * @function
@@ -176,10 +186,9 @@
 		 *       //call the parent constructor giving true
 		 *       //as parameter, so that we use the update & draw functions
 		 *       this.parent(true);
-		 *       ...
-		 *       ...
+		 *       // ...
 		 *     },
-		 *     ...
+		 *     // ...
 		 * });
 		 */
 		update : function() {
@@ -213,7 +222,7 @@
 		/**
 		 * draw function<br>
 		 * optional empty function<br>
-		 * only used by the engine if the object has been initialized using addAsObject parameter set to true<br>
+		 * only used by the engine if the object has been initialized using addAsObject=true<br>
 		 * @name draw
 		 * @memberOf me.ScreenObject
 		 * @function
@@ -227,10 +236,9 @@
 		 *       //call the parent constructor giving true
 		 *       //as parameter, so that we use the update & draw functions
 		 *       this.parent(true);
-		 *       ...
-		 *       ...
+		 *       // ...
 		 *     },
-		 *     ...
+		 *     // ...
 		 * });
 		 */
 		draw : function() {
