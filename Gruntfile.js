@@ -92,7 +92,8 @@ module.exports = function(grunt) {
 				prefix: '@'
 			},
 			files: [
-				{expand: true, flatten: true, src: ['build/<%= pkg.name %>-<%= pkg.version %>.js'], dest: 'build/'}
+				{expand: true, flatten: true, src: ['build/<%= pkg.name %>-<%= pkg.version %>.js'], dest: 'build/'},
+				{expand: true, flatten: true, src: ['build/<%= pkg.name %>-<%= pkg.version %>-amd.js'], dest: 'build/'}
 			]
 		}
 	},

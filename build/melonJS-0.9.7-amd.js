@@ -28,7 +28,7 @@ var me = me || {},
 		// settings & configuration
 		// library name & version
 		mod : "melonJS",
-		version : "@VERSION",
+		version : "0.9.7",
 		nocache : '',
 
 		// Public Object (To be completed)
@@ -203,7 +203,7 @@ var me = me || {},
 		 * @public
 		 * @function
 		 * @param {String} first First version string to compare
-		 * @param {String} [second="@VERSION"] Second version string to compare 
+		 * @param {String} [second="0.9.7"] Second version string to compare 
 		 * @return {Integer} comparison result <br>&lt; 0 : first &lt; second <br>0 : first == second <br>&gt; 0 : first &gt; second
 		 * @example
 		 * if (me.sys.checkVersion("0.9.5") > 0) {
