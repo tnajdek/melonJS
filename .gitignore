@@ -11,7 +11,6 @@ npm-debug.log
 # project specific ignore
 add-on/
 node_modules/
-build/*
 docs/*
 !.placeholder
 
