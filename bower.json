@@ -1,5 +1,5 @@
 {
 	"name": "MelonJS",
 	"version": "0.9.7",
-	"main": "./build/melonJS-0.9.7.js"
+	"main": "./build/melonJS-0.9.7-amd.js"
 }

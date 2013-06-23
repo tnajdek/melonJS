@@ -1,3 +1,8 @@
+About this fork
+===============
+
+This is a fork of MelonJS with support for AMD (e.g. [RequireJS](http://requirejs.org/)) and [Bower](http://bower.io/). Currently only version 0.9.7 is supported in this fork.
+
 melonJS - a fresh & lightweight HTML5 game engine
 ========================================================================
 

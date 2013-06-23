@@ -6,7 +6,7 @@ module.exports = function(grunt) {
     pkg: grunt.file.readJSON('package.json'),
 	
     concat: {
-		dist: {
+		basic: {
 			src: [
 				'src/core.js',
 				'src/math/geometry.js',
@@ -40,6 +40,46 @@ module.exports = function(grunt) {
 				'src/plugin/plugin.js'
 			],
 			dest: 'build/<%= pkg.name %>-<%= pkg.version %>.js'
+		},
+		amd: {
+			src: [
+				'src/core-amd.js',
+				'src/math/geometry.js',
+				'src/debug/debug.js',
+				'src/renderable/base.js',
+				'src/renderable/sprite.js',
+				'src/renderable/texturepacker.js',
+				'src/renderable/camera.js',
+				'src/entity/entity.js',
+				'src/state/state.js',
+				'src/loader/loader.js',
+				'src/font/font.js',
+				'src/GUI/GUI.js',
+				'src/GUI/HUD.js',
+				'src/audio/audio.js',
+				'src/video/video.js',
+				'src/input/input.js',
+				'src/utils/utils.js',
+				'src/utils/stat.js',
+				'src/level/TMXConstants.js',
+				'src/level/TMXUtils.js',
+				'src/level/TMXObjectGroup.js',	
+				'src/level/TMXTileset.js',
+				'src/level/TMXRenderer.js',
+				'src/level/TMXLayer.js',
+				'src/level/TMXTiledMap.js',
+				'src/level/TMXMapReader.js',
+				'src/level/LevelDirector.js',
+				'src/vendors/tween.js',
+				'src/vendors/minpubsub.src.js',
+				'src/plugin/plugin.js',
+				'src/init.js',
+			],
+			options: {
+				banner: 'define(function() {',
+				footer: 'return me; });'
+			},
+			dest: 'build/<%= pkg.name %>-<%= pkg.version %>-amd.js'
 		}
     },
 	
@@ -62,9 +102,14 @@ module.exports = function(grunt) {
 			report: 'min',
 			preserveComments: 'some'
 		},
-		dist: {
+		basic: {
 			files: {
-				'build/<%= pkg.name %>-<%= pkg.version %>-min.js': ['<%= concat.dist.dest %>']
+				'build/<%= pkg.name %>-<%= pkg.version %>-min.js': ['<%= concat.basic.dest %>']
+			}
+		},
+		amd: {
+			files: {
+				'build/<%= pkg.name %>-<%= pkg.version %>-amd-min.js': ['<%= concat.amd.dest %>']
 			}
 		}
 	},
@@ -119,8 +164,9 @@ module.exports = function(grunt) {
   
  
   // Default task.
-  grunt.registerTask('default', ['concat', 'replace', 'uglify']);
-  grunt.registerTask('lint', ['concat', 'replace', 'jshint']);
-  grunt.registerTask('doc', ['concat', 'replace', 'jsdoc']);
+  grunt.registerTask('default', ['concat:basic', 'replace', 'uglify:basic']);
+  grunt.registerTask('amd', ['concat:amd', 'replace', 'uglify:amd']);
+  grunt.registerTask('lint', ['concat:basic', 'replace', 'jshint']);
+  grunt.registerTask('doc', ['concat:basic', 'replace', 'jsdoc']);
 
 };
